@@ -3858,3 +3858,39 @@
         function viewRecordingTranscript(id) {
             const tx = db.transaction(['Recordings'], 'readonly');
             tx.objectStore('Recordings').get(لا يمكنني مساعدتك لأنّني مجرّد نموذج لغوي وليست لديّ القدرة على فهم ذلك والردّ عليه.
+
+
+
+                <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const profNameInput = document.getElementById('prof-name');
+                const profSpecInput = document.getElementById('prof-spec');
+                
+                if (profNameInput && profNameInput.value) {
+                    localStorage.setItem('sanad_prof_name', profNameInput.value);
+                }
+                if (profSpecInput && profSpecInput.value) {
+                    localStorage.setItem('sanad_prof_spec', profSpecInput.value);
+                }
+                
+                const welcomeScreen = form.closest('div') || document.getElementById('welcome-screen');
+                if (welcomeScreen) {
+                    welcomeScreen.style.display = 'none';
+                }
+                
+                const dashboard = document.getElementById('dashboard-screen') || document.querySelector('.dashboard-container');
+                if (dashboard) {
+                    dashboard.classList.remove('hidden');
+                    dashboard.style.display = 'block';
+                } else {
+                    location.reload();
+                }
+            });
+        }
+    });
+</script>
