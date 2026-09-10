@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>سند - المساعد الذكي للأخصائي النفسي</title>
-    <script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=iQf77uDAZ5snIXYMf161vK-ih4XVGi6dAZpAUcCqmXx5sNXXqrkBRaBuJ-ofXAhi3LvoVOXOGHizus-ghyp6ie9MnaXc2GFuJo5FyQytzt-aQjzNMFa8HisUuL7qJdu21REwxKrPCM1oD_uTSbULAS7cI2HeRsouhVwgHz7-leGeFqr0K1-fDW8fxOrp5mo6r1HYzFAm38ksiJ96Z9O_nAGqsn3Baz8rtd85Qa_Wc3wI9bk-T53kQHO47qXekPsOUIZIBQeBCC2EZttwQ3NtCzm62m00EpuvV3jWex4RaBp0UDKnoekTxoDnG-xDmKNo" charset="UTF-8"></script><script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -909,10 +909,6 @@
         const SANAD_AI_ENDPOINT_DEFAULT = '/api/sanad-chat';
         let sanadChatMessages = [];
         let sanadChatBusy = false;
-        // سياق العميل يبقى محلياً داخل الجهاز ولا يُرسل للخدمة الخارجية تلقائياً.
-        let sanadClientContextCache = null;
-        let sanadClientContextCacheId = null;
-        let sanadChatAnnouncedClientId = null;
         let recordingIsActive = false;
         let speechShouldRun = false;
         let speechRecognitionBlocked = false;
@@ -1472,9 +1468,9 @@
                 };
                 req.onsuccess = e => { 
                     db = e.target.result; 
-                    // Keep database opening on the critical path only.
-                    // Non-essential rendering is scheduled after the first app view is visible.
                     resolve(db); 
+                    populateInitialDataIfNeeded(); 
+                    renderInitialScreeningLists();
                 };
                 req.onupgradeneeded = e => {
                     const d = e.target.result;
@@ -1492,90 +1488,17 @@
             });
         }
 
-        // ==================== FAST STARTUP (UI/DB structure unchanged) ====================
-        const SANAD_PROFILE_BOOT_CACHE_KEY = 'sanad.profile.boot.cache.v1';
-        let sanadBootStarted = false;
-
-        function readSanadBootProfileCache() {
-            try {
-                const raw = localStorage.getItem(SANAD_PROFILE_BOOT_CACHE_KEY);
-                if(!raw) return null;
-                const p = JSON.parse(raw);
-                return p && p.name ? p : null;
-            } catch(e) {
-                return null;
-            }
-        }
-
-        function writeSanadBootProfileCache(profile) {
-            if(!profile || !profile.name) return;
-            try {
-                localStorage.setItem(SANAD_PROFILE_BOOT_CACHE_KEY, JSON.stringify({
-                    name: profile.name,
-                    specialty: profile.specialty || ''
-                }));
-            } catch(e) {}
-        }
-
-        function clearSanadBootProfileCache() {
-            try { localStorage.removeItem(SANAD_PROFILE_BOOT_CACHE_KEY); } catch(e) {}
-        }
-
-        function applySanadProfileToStartupUI(profile) {
-            if(!profile || !profile.name) return false;
-            const dashName = document.getElementById('dashboard-doc-name');
-            if(dashName) dashName.innerText = `الأخصائي النفسي ${profile.name}`;
-            const docSpan = document.getElementById('ws-preview-doc-name');
-            if(docSpan) docSpan.innerText = `الأخصائي: ${profile.name}`;
-            switchView('home');
-            initializeSanadNavigationHistory('home');
-            return true;
-        }
-
-        function scheduleSanadNonCriticalStartup() {
-            const run = () => {
-                try { populateInitialDataIfNeeded(); } catch(e) { console.warn('Deferred team init:', e); }
-                try { renderTherapeuticApproachesList(); } catch(e) { console.warn('Deferred approaches init:', e); }
-                try { renderInitialScreeningLists(); } catch(e) { console.warn('Deferred screening init:', e); }
-                try { initializeSanadNotifications(); } catch(e) { console.warn('Deferred notifications init:', e); }
-            };
-
-            // Give the browser one paint opportunity before doing non-essential startup work.
-            requestAnimationFrame(() => {
-                if('requestIdleCallback' in window) {
-                    requestIdleCallback(run, { timeout: 500 });
-                } else {
-                    setTimeout(run, 20);
-                }
-            });
-        }
-
-        async function bootSanadAppFast() {
-            if(sanadBootStarted) return;
-            sanadBootStarted = true;
-
-            // Returning users see the home screen immediately, without waiting for IndexedDB.
-            const cachedProfile = readSanadBootProfileCache();
-            if(cachedProfile) applySanadProfileToStartupUI(cachedProfile);
-
+        window.onload = async function() {
             try {
                 await initDB();
-                // Verify the cached profile against the real database in the background.
                 checkProfileStatus();
-                scheduleSanadNonCriticalStartup();
+                renderTherapeuticApproachesList();
+                renderInitialScreeningLists();
+                initializeSanadNotifications();
             } catch(err) {
                 console.error("Init failed:", err);
-                // If there was no cache and IndexedDB failed, keep the existing welcome screen usable.
-                if(!cachedProfile) switchView('welcome', { fromHistory: true });
             }
-        }
-
-        // Start as soon as the DOM is ready instead of waiting for every external resource/image.
-        if(document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', bootSanadAppFast, { once: true });
-        } else {
-            bootSanadAppFast();
-        }
+        };
 
         function showToast(msg, isErr=false) {
             const t = document.getElementById('toast-notification');
@@ -1669,10 +1592,12 @@
                 const profiles = e.target.result;
                 if(profiles && profiles.length > 0) {
                     const p = profiles[0];
-                    writeSanadBootProfileCache(p);
-                    applySanadProfileToStartupUI(p);
+                    document.getElementById('dashboard-doc-name').innerText = `الأخصائي النفسي ${p.name}`;
+                    const docSpan = document.getElementById('ws-preview-doc-name');
+                    if(docSpan) docSpan.innerText = `الأخصائي: ${p.name}`;
+                    switchView('home');
+                    initializeSanadNavigationHistory('home');
                 } else {
-                    clearSanadBootProfileCache();
                     switchView('welcome');
                 }
             };
@@ -1686,7 +1611,6 @@
             const tx = db.transaction(['Profile'], 'readwrite');
             tx.objectStore('Profile').add({ name, specialty });
             tx.oncomplete = () => {
-                writeSanadBootProfileCache({ name, specialty });
                 showToast('تم حفظ الملف المهني بنجاح');
                 checkProfileStatus();
             };
@@ -4468,7 +4392,6 @@
                 const tx = db.transaction(['Recordings'], 'readwrite');
                 tx.objectStore('Recordings').add(newRecording);
                 tx.oncomplete = () => {
-                    invalidateSanadClientContext();
                     showToast('تم حفظ التسجيل الصوتي في القائمة بنجاح');
                     closeModal();
                     switchView('recordings-library');
@@ -4508,7 +4431,6 @@
                 const tx = db.transaction(['Recordings'], 'readwrite');
                 tx.objectStore('Recordings').add(newRec);
                 tx.oncomplete = () => {
-                    invalidateSanadClientContext();
                     showToast('تم إدراج الملف الصوتي وحفظه');
                     closeModal();
                     switchView('recordings-library');
@@ -4682,7 +4604,6 @@
                 const tx = db.transaction(['Recordings'], 'readwrite');
                 tx.objectStore('Recordings').delete(id);
                 tx.oncomplete = () => {
-                    invalidateSanadClientContext();
                     showToast('تم حذف التسجيل بنجاح');
                     closeModal();
                     loadRecordingsLibrary();
@@ -4917,13 +4838,13 @@
                     const merged = { ...old, ...data, id: currentEditingCaseFormulationId, createdAt: old.createdAt || Date.now() };
                     const tx2 = db.transaction(['CaseFormulations'], 'readwrite');
                     tx2.objectStore('CaseFormulations').put(merged);
-                    tx2.oncomplete = () => { invalidateSanadClientContext(data.clientId); showToast('تم تحديث تحليل الحالة'); currentEditingCaseFormulationId = null; renderCaseFormulationsHome(); };
+                    tx2.oncomplete = () => { showToast('تم تحديث تحليل الحالة'); currentEditingCaseFormulationId = null; renderCaseFormulationsHome(); };
                 };
             } else {
                 data.createdAt = Date.now();
                 const tx = db.transaction(['CaseFormulations'], 'readwrite');
                 tx.objectStore('CaseFormulations').add(data);
-                tx.oncomplete = () => { invalidateSanadClientContext(data.clientId); showToast('تم حفظ تحليل الحالة'); renderCaseFormulationsHome(); };
+                tx.oncomplete = () => { showToast('تم حفظ تحليل الحالة'); renderCaseFormulationsHome(); };
             }
         }
 
@@ -5133,13 +5054,13 @@
                     const merged = { ...old, ...data, id: existingId, createdAt: old.createdAt || Date.now() };
                     const tx = db.transaction(['Appointments'], 'readwrite');
                     tx.objectStore('Appointments').put(merged);
-                    tx.oncomplete = () => { invalidateSanadClientContext(data.clientId); closeModal(); showToast('تم تحديث الموعد'); renderAppointmentsModule(); };
+                    tx.oncomplete = () => { closeModal(); showToast('تم تحديث الموعد'); renderAppointmentsModule(); };
                 };
             } else {
                 data.createdAt = Date.now();
                 const tx = db.transaction(['Appointments'], 'readwrite');
                 tx.objectStore('Appointments').add(data);
-                tx.oncomplete = () => { invalidateSanadClientContext(data.clientId); closeModal(); showToast('تم حفظ الموعد'); renderAppointmentsModule(); };
+                tx.oncomplete = () => { closeModal(); showToast('تم حفظ الموعد'); renderAppointmentsModule(); };
             }
         }
 
@@ -5726,210 +5647,6 @@
             };
         }
 
-        // ==================== SANAD CLIENT-AWARE CONTEXT (LOCAL ONLY) ====================
-        function sanadNormalizeText(value) {
-            return String(value || '')
-                .toLowerCase()
-                .replace(/[أإآ]/g, 'ا')
-                .replace(/ى/g, 'ي')
-                .replace(/ة/g, 'ه')
-                .replace(/[ًٌٍَُِّْـ]/g, '')
-                .replace(/\s+/g, ' ')
-                .trim();
-        }
-
-        function sanadIDBGet(storeName, key) {
-            return new Promise((resolve) => {
-                try {
-                    const tx = db.transaction([storeName], 'readonly');
-                    const req = tx.objectStore(storeName).get(key);
-                    req.onsuccess = () => resolve(req.result || null);
-                    req.onerror = () => resolve(null);
-                } catch(e) { resolve(null); }
-            });
-        }
-
-        function sanadIDBGetAll(storeName) {
-            return new Promise((resolve) => {
-                try {
-                    const tx = db.transaction([storeName], 'readonly');
-                    const req = tx.objectStore(storeName).getAll();
-                    req.onsuccess = () => resolve(req.result || []);
-                    req.onerror = () => resolve([]);
-                } catch(e) { resolve([]); }
-            });
-        }
-
-        function sanadItemBelongsToClient(item, client) {
-            if(!item || !client) return false;
-            if(item.clientId !== undefined && item.clientId !== null && Number(item.clientId) === Number(client.id)) return true;
-            const itemName = sanadNormalizeText(item.clientName);
-            const clientName = sanadNormalizeText(client.name);
-            return !!itemName && !!clientName && itemName === clientName;
-        }
-
-        async function collectSanadClientContext(clientId) {
-            if(!clientId || !db) return null;
-            if(sanadClientContextCache && Number(sanadClientContextCacheId) === Number(clientId)) return sanadClientContextCache;
-
-            const [client, formulations, recordings, appointments, plans] = await Promise.all([
-                sanadIDBGet('Clients', Number(clientId)),
-                sanadIDBGetAll('CaseFormulations'),
-                sanadIDBGetAll('Recordings'),
-                sanadIDBGetAll('Appointments'),
-                sanadIDBGetAll('SessionPlans')
-            ]);
-            if(!client) return null;
-
-            const byNewest = (a,b) => Number(b.updatedAt || b.createdAt || b.timestamp || 0) - Number(a.updatedAt || a.createdAt || a.timestamp || 0);
-            const clientFormulations = formulations.filter(x => sanadItemBelongsToClient(x, client)).sort(byNewest);
-            const clientRecordings = recordings.filter(x => sanadItemBelongsToClient(x, client)).sort(byNewest);
-            const clientAppointments = appointments.filter(x => sanadItemBelongsToClient(x, client)).sort((a,b) => {
-                const da = new Date(`${a.date || '1970-01-01'}T${a.time || '00:00'}`).getTime();
-                const dbv = new Date(`${b.date || '1970-01-01'}T${b.time || '00:00'}`).getTime();
-                return da - dbv;
-            });
-            const clientPlans = plans.filter(x => sanadItemBelongsToClient(x, client)).sort(byNewest);
-
-            const now = Date.now();
-            const upcoming = clientAppointments.filter(a => {
-                if(['مكتمل','ملغي'].includes(a.status)) return false;
-                const ts = new Date(`${a.date || ''}T${a.time || '00:00'}`).getTime();
-                return Number.isFinite(ts) && ts >= now - 60*60*1000;
-            });
-
-            const context = {
-                client,
-                formulations: clientFormulations,
-                recordings: clientRecordings,
-                appointments: clientAppointments,
-                upcomingAppointments: upcoming,
-                plans: clientPlans,
-                latestFormulation: clientFormulations[0] || null,
-                latestRecording: clientRecordings[0] || null,
-                latestPlan: clientPlans[0] || null,
-                nextAppointment: upcoming[0] || null,
-                notes: Array.isArray(client.clientNotes) ? client.clientNotes.slice(-5).reverse() : []
-            };
-            sanadClientContextCache = context;
-            sanadClientContextCacheId = Number(clientId);
-            return context;
-        }
-
-        function invalidateSanadClientContext(clientId = null) {
-            if(clientId === null || Number(clientId) === Number(sanadClientContextCacheId)) {
-                sanadClientContextCache = null;
-                sanadClientContextCacheId = null;
-            }
-        }
-
-        function sanadTrimClinicalText(value, max = 700) {
-            const s = String(value || '').trim();
-            if(!s) return '';
-            return s.length > max ? s.slice(0, max).trim() + '…' : s;
-        }
-
-        function sanadDescribeLatestRecording(r) {
-            if(!r) return 'لا توجد جلسة مسجلة مرتبطة بهذا العميل حتى الآن.';
-            const useful = sanadTrimClinicalText(r.summary || r.transcript, 700);
-            return `${r.title || 'جلسة مسجلة'}${r.date ? ` — ${r.date}` : ''}${r.durationFormatted ? ` — ${r.durationFormatted}` : ''}${useful ? `\n${useful}` : ''}`;
-        }
-
-        function sanadDescribeNextAppointment(a) {
-            if(!a) return 'لا يوجد موعد قادم مسجل.';
-            return `${a.title || 'جلسة'} — ${a.date || '-'} الساعة ${a.time || '-'} — ${a.sessionType || 'فردية'} — ${a.status || 'مجدول'}`;
-        }
-
-        function sanadBuildClientSummary(ctx) {
-            const c = ctx.client || {};
-            const f = ctx.latestFormulation || {};
-            const notes = ctx.notes || [];
-            const parts = [
-                `ملخص ملف العميل الحالي — مبني فقط على البيانات المحفوظة في سَنَد:`,
-                `• سبب المراجعة: ${c.reason || 'غير مسجل'}`,
-                `• الملاحظات الأولية: ${sanadTrimClinicalText(c.initialNotes, 450) || 'غير مسجلة'}`
-            ];
-            if(f.presentingProblem || f.currentSymptoms) {
-                parts.push(`• المشكلة/الأعراض الحالية: ${sanadTrimClinicalText(f.presentingProblem || f.currentSymptoms, 650)}`);
-            }
-            if(f.diagnosticHypotheses) parts.push(`• الفرضيات التشخيصية المسجلة: ${sanadTrimClinicalText(f.diagnosticHypotheses, 500)}`);
-            if(f.strengths || f.protective) parts.push(`• نقاط القوة/العوامل الواقية: ${sanadTrimClinicalText(f.strengths || f.protective, 500)}`);
-            if(f.goals) parts.push(`• الأهداف الحالية: ${sanadTrimClinicalText(f.goals, 550)}`);
-            if(notes.length) parts.push(`• أحدث ملاحظة: ${sanadTrimClinicalText(notes[0].text, 450)}`);
-            parts.push(`• عدد الجلسات المسجلة: ${ctx.recordings.length}`);
-            parts.push(`• الموعد القادم: ${sanadDescribeNextAppointment(ctx.nextAppointment)}`);
-            return parts.join('\n');
-        }
-
-        function sanadBuildNextSessionDraft(ctx) {
-            const c = ctx.client || {};
-            const f = ctx.latestFormulation || {};
-            const p = ctx.latestPlan || {};
-            const r = ctx.latestRecording || null;
-            const primaryGoal = sanadTrimClinicalText(f.goals || p.mainGoal || c.reason, 450) || 'يُحدد الهدف مع العميل في بداية الجلسة';
-            const focus = sanadTrimClinicalText(f.presentingProblem || p.mainTopic || c.reason, 400) || 'مراجعة المشكلة الحالية والتقدم منذ الجلسة السابقة';
-            const recent = r ? sanadTrimClinicalText(r.summary || r.transcript, 500) : '';
-            const approach = p.approach || 'المدرسة العلاجية المعتمدة لدى الأخصائي';
-            return [
-                `مسودة تحضير للجلسة القادمة — تحتاج مراجعة الأخصائي قبل اعتمادها:`,
-                `• محور الجلسة: ${focus}`,
-                `• الهدف السريري الحالي: ${primaryGoal}`,
-                `• المنهج العلاجي المسجل: ${approach}`,
-                recent ? `• نقطة الانطلاق من آخر جلسة: ${recent}` : `• لا يوجد تفريغ/ملخص سابق كافٍ؛ ابدأ بمراجعة ما حدث منذ آخر لقاء.`,
-                ``,
-                `أجندة مقترحة (50 دقيقة):`,
-                `1. فحص الحالة الحالية والمخاطر والتغيرات المهمة — 5 دقائق.`,
-                `2. مراجعة ما تم منذ الجلسة السابقة والواجب/الممارسة — 10 دقائق.`,
-                `3. تحديد هدف الجلسة بصورة مشتركة — 5 دقائق.`,
-                `4. التدخل العلاجي الرئيس المرتبط بالهدف — 20 دقيقة.`,
-                `5. تدريب عملي أو تطبيق داخل الجلسة — 5 دقائق.`,
-                `6. تلخيص، تغذية راجعة، واتفاق على خطوة بين الجلسات — 5 دقائق.`,
-                ``,
-                `أسئلة مساعدة: ما أهم تغير منذ اللقاء السابق؟ ما الموقف الأصعب؟ ما الذي ساعد ولو قليلًا؟ ما الخطوة الصغيرة الأكثر واقعية قبل الجلسة التالية؟`,
-                f.risk ? `\nتنبيه من ملف الحالة: يوجد نص في خانة تقييم المخاطر ويجب مراجعته سريريًا: ${sanadTrimClinicalText(f.risk, 350)}` : ''
-            ].filter(Boolean).join('\n');
-        }
-
-        function getSanadClientContextAnswer(query, ctx) {
-            if(!ctx || !ctx.client) return null;
-            const q = sanadNormalizeText(query);
-            const has = (...terms) => terms.some(t => q.includes(sanadNormalizeText(t)));
-            const explicitlyClient = has('هذا العميل','هذه الحالة','الحالة الحالية','العميل الحالي','ملف العميل','عنه','عنها');
-
-            if(has('لخص الحالة','لخص لي الحالة','ملخص الحالة','لخص العميل','ملخص العميل') || (explicitlyClient && has('لخص','ملخص'))) {
-                return { confidence: 20, answer: sanadBuildClientSummary(ctx), source: 'ملف العميل المحلي' };
-            }
-            if(has('حضر الجلسة','حضّر الجلسة','تحضير الجلسة','الجلسة القادمة','ماذا اقترح للجلسة','ماذا أقترح للجلسة','خطة الجلسة القادمة')) {
-                return { confidence: 20, answer: sanadBuildNextSessionDraft(ctx), source: 'ملف العميل المحلي' };
-            }
-            if(has('الموعد القادم','موعده القادم','موعدها القادم','متى الموعد','متى جلسته','متى جلستها')) {
-                return { confidence: 20, answer: `الموعد القادم المسجل لهذا العميل:\n${sanadDescribeNextAppointment(ctx.nextAppointment)}`, source: 'مواعيد العميل' };
-            }
-            if(has('اخر جلسة','آخر جلسة','الجلسة السابقة','ماذا حدث في اخر جلسة','ماذا حدث في آخر جلسة')) {
-                return { confidence: 20, answer: `آخر جلسة مرتبطة بالعميل:\n${sanadDescribeLatestRecording(ctx.latestRecording)}`, source: 'جلسات العميل' };
-            }
-            if(has('الاهداف','الأهداف','هدف العلاج','اهداف العلاج','أهداف العلاج')) {
-                const f = ctx.latestFormulation || {};
-                const p = ctx.latestPlan || {};
-                const goals = sanadTrimClinicalText(f.goals || p.mainGoal, 900);
-                return { confidence: 18, answer: goals ? `الأهداف المسجلة حاليًا:\n${goals}` : 'لا توجد أهداف علاجية مفصلة محفوظة لهذا العميل حتى الآن. يمكن تحديدها في تحليل الحالة أو تحضير الجلسة.', source: 'ملف العميل المحلي' };
-            }
-            if(has('الخطر','المخاطر','خطورة','انتحار','ايذاء النفس','إيذاء النفس')) {
-                const risk = sanadTrimClinicalText(ctx.latestFormulation?.risk, 1000);
-                return { confidence: 18, answer: risk ? `المعلومات المسجلة في خانة تقييم المخاطر:\n${risk}\n\nهذه ليست إعادة تقييم آلية؛ يجب مراجعة السلامة سريريًا في الوقت الحالي.` : 'لا توجد معلومات مخاطر محفوظة في أحدث صياغة حالة. غياب التسجيل لا يعني غياب الخطر؛ يلزم التقييم السريري المباشر عند وجود مؤشرات.', source: 'صياغة الحالة' };
-            }
-            if(has('التقدم','تطور الحالة','هل تحسن','هل تحسنت','التحسن')) {
-                const sessionCount = ctx.recordings.length;
-                const note = ctx.notes[0]?.text ? sanadTrimClinicalText(ctx.notes[0].text, 500) : '';
-                const rec = ctx.latestRecording ? sanadTrimClinicalText(ctx.latestRecording.summary || ctx.latestRecording.transcript, 500) : '';
-                return { confidence: 16, answer: `لا يمكن استنتاج مقدار التحسن بدقة من عدد الجلسات وحده.\n• الجلسات المسجلة: ${sessionCount}\n${rec ? `• أحدث محتوى جلسة: ${rec}\n` : ''}${note ? `• أحدث ملاحظة ملف: ${note}\n` : ''}للحكم على التقدم بصورة أفضل، قارن القياسات المتكررة وخط الأساس والأداء اليومي والأهداف المتفق عليها.`, source: 'ملف العميل المحلي' };
-            }
-            if(explicitlyClient) {
-                return { confidence: 12, answer: `${sanadBuildClientSummary(ctx)}\n\nيمكنك أن تطلب مني: «لخص الحالة»، «ما الموعد القادم؟»، «ماذا حدث في آخر جلسة؟»، «ما الأهداف؟»، أو «حضّر الجلسة القادمة».`, source: 'ملف العميل المحلي' };
-            }
-            return null;
-        }
-
         function getSanadAIEndpoint() {
             return (localStorage.getItem('sanad_ai_endpoint') || SANAD_AI_ENDPOINT_DEFAULT).trim();
         }
@@ -5942,28 +5659,15 @@
             return true;
         }
 
-        async function initializeSanadChat() {
+        function initializeSanadChat() {
             const historyBox = document.getElementById('ai-chat-history');
             if(!historyBox) return;
-            if(historyBox.dataset.initialized !== '1') {
-                historyBox.dataset.initialized = '1';
-                const modeText = sanadCanUseRemoteAI()
-                    ? 'لدي قاعدة معرفة نفسية مدمجة، ويمكنني كذلك استخدام خدمة الذكاء الاصطناعي المتصلة بالتطبيق عند الحاجة.'
-                    : 'أعمل الآن بقاعدة معرفة نفسية مدمجة داخل سند، لذلك أستطيع الإجابة عن الأسئلة النفسية الأساسية حتى عند فتح التطبيق من جهازك مباشرة.';
-                appendSanadChatBubble('assistant', `مرحباً، أنا سَنَد. ${modeText}`);
-            }
-
-            // إذا فُتحت دردشة سند أثناء وجود ملف عميل نشط، يقرأ سند سياق الملف محلياً.
-            if(currentActiveProfileClientId) {
-                const ctx = await collectSanadClientContext(currentActiveProfileClientId);
-                if(ctx && Number(sanadChatAnnouncedClientId) !== Number(currentActiveProfileClientId)) {
-                    sanadChatAnnouncedClientId = Number(currentActiveProfileClientId);
-                    appendSanadChatBubble('assistant', `تم ربط هذه المحادثة محلياً بملف العميل: ${ctx.client.name || 'العميل الحالي'}. يمكنك أن تسألني: لخص الحالة، ما آخر جلسة؟ ما الموعد القادم؟ ما الأهداف؟ أو حضّر الجلسة القادمة.`);
-                    setSanadChatStatus('سياق العميل الحالي مُفعّل محلياً ولا يُرسل تلقائياً للخدمة الخارجية.');
-                }
-            } else {
-                sanadChatAnnouncedClientId = null;
-            }
+            if(historyBox.dataset.initialized === '1') return;
+            historyBox.dataset.initialized = '1';
+            const modeText = sanadCanUseRemoteAI()
+                ? 'لدي قاعدة معرفة نفسية مدمجة، ويمكنني كذلك استخدام خدمة الذكاء الاصطناعي المتصلة بالتطبيق عند الحاجة.'
+                : 'أعمل الآن بقاعدة معرفة نفسية مدمجة داخل سند، لذلك أستطيع الإجابة عن الأسئلة النفسية الأساسية حتى عند فتح التطبيق من جهازك مباشرة.';
+            appendSanadChatBubble('assistant', `مرحباً، أنا سَنَد. ${modeText}`);
         }
 
         function appendSanadChatBubble(role, text, pending = false) {
@@ -6034,45 +5738,36 @@
             sanadChatMessages.push({ role: 'user', content: text });
             if(sanadChatMessages.length > 18) sanadChatMessages = sanadChatMessages.slice(-18);
             const pendingBubble = appendSanadChatBubble('assistant', 'جاري البحث في قاعدة سند...', true);
+            const localResult = getSanadLocalKnowledgeAnswer(text);
+
+            // فتح ملف HTML محلياً: نستخدم قاعدة المعرفة مباشرة ولا ننفذ fetch يسبب Failed to fetch.
+            if(!sanadCanUseRemoteAI()) {
+                finalizeSanadChatAnswer(pendingBubble, localResult.answer, 'الإجابة من قاعدة المعرفة النفسية المدمجة في سَنَد');
+                sanadChatBusy = false;
+                if(sendBtn) sendBtn.disabled = false;
+                input.focus();
+                return;
+            }
+
+            // للأسئلة التي تعرفها القاعدة المحلية بثقة عالية نجيب فوراً دون انتظار الشبكة.
+            if(localResult && localResult.confidence >= 8) {
+                finalizeSanadChatAnswer(pendingBubble, localResult.answer, 'الإجابة من قاعدة المعرفة النفسية المدمجة في سَنَد');
+                sanadChatBusy = false;
+                if(sendBtn) sendBtn.disabled = false;
+                input.focus();
+                return;
+            }
+
+            setSanadChatStatus('سَنَد يحاول استخدام خدمة الذكاء الاصطناعي المتصلة...');
+            if(pendingBubble) pendingBubble.textContent = 'جاري التفكير...';
 
             try {
-                // أولوية لسياق ملف العميل عند وجود عميل نشط. القراءة محلية فقط.
-                let clientContext = null;
-                let clientResult = null;
-                if(currentActiveProfileClientId) {
-                    clientContext = await collectSanadClientContext(currentActiveProfileClientId);
-                    if(clientContext) clientResult = getSanadClientContextAnswer(text, clientContext);
-                }
-
-                if(clientResult && clientResult.confidence >= 12) {
-                    finalizeSanadChatAnswer(pendingBubble, clientResult.answer, `الإجابة من ${clientResult.source || 'ملف العميل المحلي'}`);
-                    return;
-                }
-
-                const localResult = getSanadLocalKnowledgeAnswer(text);
-
-                // فتح ملف HTML محلياً: نستخدم قاعدة المعرفة مباشرة ولا ننفذ fetch يسبب Failed to fetch.
-                if(!sanadCanUseRemoteAI()) {
-                    finalizeSanadChatAnswer(pendingBubble, localResult.answer, 'الإجابة من قاعدة المعرفة النفسية المدمجة في سَنَد');
-                    return;
-                }
-
-                // للأسئلة التي تعرفها القاعدة المحلية بثقة عالية نجيب فوراً دون انتظار الشبكة.
-                if(localResult && localResult.confidence >= 8) {
-                    finalizeSanadChatAnswer(pendingBubble, localResult.answer, 'الإجابة من قاعدة المعرفة النفسية المدمجة في سَنَد');
-                    return;
-                }
-
-                setSanadChatStatus('سَنَد يحاول استخدام خدمة الذكاء الاصطناعي المتصلة...');
-                if(pendingBubble) pendingBubble.textContent = 'جاري التفكير...';
-
                 const endpoint = getSanadAIEndpoint();
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 12000);
                 const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    // خصوصية: لا نضيف بيانات العميل تلقائياً إلى الطلب الخارجي.
                     body: JSON.stringify({ messages: sanadChatMessages }),
                     signal: controller.signal
                 });
@@ -6087,7 +5782,6 @@
                 if(!answer) throw new Error('empty response');
                 finalizeSanadChatAnswer(pendingBubble, answer, 'الإجابة عبر خدمة الذكاء الاصطناعي المتصلة بسَنَد');
             } catch(error) {
-                const localResult = getSanadLocalKnowledgeAnswer(text);
                 // لا نعرض Failed to fetch للمستخدم؛ نعود فوراً للقاعدة المحلية.
                 finalizeSanadChatAnswer(pendingBubble, localResult.answer, 'تعذر الاتصال بالخدمة الخارجية؛ تم استخدام قاعدة سند المحلية');
             } finally {
