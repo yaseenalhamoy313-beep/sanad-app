@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>سند - المساعد الذكي للأخصائي النفسي</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=mHwydY5psufIwRucwqU-WjAEEwAP3TVWLz54jvBZAALlYiHKvslnGLidxqjKmR3hSEJd0EXvuELzCgWv_LOqimH1JMmByyZmEXRnXn8ZjQ3Z4ZN2t8tp3SsgOzZIlcIUd_x3HX6Gq5HCnOsyPfsbdRCftIwI_oGtssU6xdC9KzkeWXdynl-qlieScGLu9aObahL2AZv5x5VzKGKO7kHzv3xex5rHfA-UzEfKUVJgh-3CajekT6tMBa32petpv2zj2uQKBBWOzv9spfQk4qWQA2QoYSu0MEC16aXpQIixFsN0WKrbpU6Z2lQaXSphjsIWTMYLoWaecnvdx-SMJYqrHg" charset="UTF-8"></script><script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -81,9 +81,9 @@
             <div id="view-home" class="view-section hidden flex flex-col min-h-screen pb-6 bg-slate-50/50">
                 
                 <header class="bg-white px-5 pt-5 pb-3 shadow-xs border-b border-slate-100 flex justify-between items-center shrink-0">
-                    <button class="w-10 h-10 rounded-full bg-slate-50 text-slate-700 flex items-center justify-center relative hover:bg-slate-100">
+                    <button id="notification-bell-btn" onclick="openNotificationsCenter()" class="w-10 h-10 rounded-full bg-slate-50 text-slate-700 flex items-center justify-center relative hover:bg-slate-100" title="الإشعارات">
                         <i class="fa-regular fa-bell text-sm"></i>
-                        <span class="absolute top-2 left-2 w-2 h-2 rounded-full bg-rose-500"></span>
+                        <span id="notification-badge" class="hidden absolute -top-1 -left-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center border-2 border-white">0</span>
                     </button>
                     <div class="text-center">
                         <h2 class="text-xs text-slate-400 font-bold">مرحباً بك</h2>
@@ -98,10 +98,11 @@
                 <div class="p-4 space-y-4">
                     
                     <div class="relative">
-                        <input type="text" placeholder="ابحث عن أداة أو اكتب طلبك هنا..." class="w-full py-3.5 pr-4 pl-12 rounded-2xl bg-white text-slate-800 text-xs border border-slate-200 focus:outline-none focus:border-cyan-500 shadow-2xs">
-                        <button class="absolute left-2.5 top-2.5 w-9 h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center shadow">
+                        <input id="global-search-input" type="text" autocomplete="off" oninput="handleGlobalSearchInput(event)" onkeydown="handleGlobalSearchKeydown(event)" placeholder="ابحث عن أداة أو عميل أو مقياس..." class="w-full py-3.5 pr-4 pl-12 rounded-2xl bg-white text-slate-800 text-xs border border-slate-200 focus:outline-none focus:border-cyan-500 shadow-2xs">
+                        <button type="button" onclick="runGlobalSearch()" class="absolute left-2.5 top-2.5 w-9 h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center shadow" title="بحث">
                             <i class="fa-solid fa-search text-xs"></i>
                         </button>
+                        <div id="global-search-results" class="hidden absolute top-[54px] right-0 left-0 z-40 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden max-h-80 overflow-y-auto"></div>
                     </div>
 
                     <!-- Services Grid -->
@@ -186,7 +187,7 @@
             <div id="view-psychometrics" class="view-section hidden flex flex-col min-h-screen">
                 <header class="bg-blue-900 text-white px-4 py-3.5 flex items-center justify-between shadow shrink-0">
                     <div class="flex items-center space-x-3 space-x-reverse">
-                        <button onclick="switchView('home')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
+                        <button onclick="sanadBackTo('home')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
                         <h2 class="text-xs font-bold">📋 الفحص الأولي (DSM & UNDSM)</h2>
                     </div>
                 </header>
@@ -233,7 +234,7 @@
             <div id="view-session-setup" class="view-section hidden flex flex-col min-h-screen">
                 <header class="bg-blue-900 text-white px-4 py-3.5 flex items-center justify-between shadow shrink-0">
                     <div class="flex items-center space-x-3 space-x-reverse">
-                        <button onclick="switchView('home')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
+                        <button onclick="sanadBackTo('home')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
                         <h2 class="text-xs font-bold">🎙️ المسجل الذكي للجلسات</h2>
                     </div>
                 </header>
@@ -263,9 +264,9 @@
 
                     <div class="space-y-3 pt-2">
                         <p class="font-bold text-blue-900 text-xs">اختر طريقة الإدخال أو العرض:</p>
-                        <button onclick="startActiveSessionRecording()" class="w-full py-3.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-2xl font-bold text-xs shadow flex items-center justify-center space-x-2 space-x-reverse">
-                            <i class="fa-solid fa-microphone text-base"></i>
-                            <span>تسجيل مباشر</span>
+                        <button id="start-recording-btn" onclick="startActiveSessionRecording()" class="w-full py-3.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-2xl font-bold text-xs shadow flex items-center justify-center space-x-2 space-x-reverse">
+                            <i id="start-recording-icon" class="fa-solid fa-microphone text-base"></i>
+                            <span id="start-recording-label">تسجيل مباشر</span>
                         </button>
                         <label class="w-full py-3.5 bg-white border-2 border-dashed border-cyan-300 text-blue-900 rounded-2xl font-bold text-xs shadow-2xs flex items-center justify-center space-x-2 space-x-reverse cursor-pointer hover:bg-cyan-50/50 transition">
                             <i class="fa-solid fa-upload text-cyan-600 text-base"></i>
@@ -292,6 +293,11 @@
                 <div class="p-5 flex-1 flex flex-col justify-between items-center text-center">
                     <div class="w-full space-y-3 pt-4">
                         <div id="active-timer" class="text-3xl font-mono font-black text-blue-900 tracking-wider">00:00</div>
+                        <div id="recording-live-status" class="w-full flex items-center justify-center gap-2 bg-rose-50 border border-rose-100 rounded-xl py-2 px-3 text-[10px] font-bold text-rose-700">
+                            <span id="recording-live-dot" class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+                            <span id="recording-live-status-text">يتم تجهيز التسجيل...</span>
+                            <span id="recording-start-clock" class="text-slate-500 font-medium"></span>
+                        </div>
                         <div class="w-full h-12 bg-blue-50 rounded-2xl flex items-center justify-center space-x-1 space-x-reverse border border-blue-100">
                             <span class="w-1.5 h-4 bg-cyan-500 animate-pulse rounded-full"></span>
                             <span class="w-1.5 h-10 bg-blue-600 animate-pulse rounded-full"></span>
@@ -317,7 +323,7 @@
             <div id="view-recordings-library" class="view-section hidden flex flex-col min-h-screen">
                 <header class="bg-blue-900 text-white px-4 py-3.5 flex items-center justify-between shadow shrink-0">
                     <div class="flex items-center space-x-3 space-x-reverse">
-                        <button onclick="switchView('session-setup')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
+                        <button onclick="sanadBackTo('session-setup')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
                         <h2 class="text-xs font-bold">📁 قائمة التسجيلات المحفوظة</h2>
                     </div>
                 </header>
@@ -330,7 +336,7 @@
             <div id="view-tools" class="view-section hidden flex flex-col min-h-screen">
                 <header class="bg-blue-900 text-white px-4 py-3.5 flex items-center justify-between shadow shrink-0">
                     <div class="flex items-center space-x-3 space-x-reverse">
-                        <button onclick="switchView('home')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
+                        <button onclick="sanadBackTo('home')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
                         <h2 class="text-xs font-bold">🌿 مكتبة الأنشطة والمدارس العلاجية</h2>
                     </div>
                 </header>
@@ -344,7 +350,7 @@
             <div id="view-tool-detail" class="view-section hidden flex flex-col min-h-screen">
                 <header class="bg-blue-900 text-white px-4 py-3.5 flex items-center justify-between shadow shrink-0">
                     <div class="flex items-center space-x-3 space-x-reverse">
-                        <button onclick="switchView('tools')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
+                        <button onclick="sanadBackTo('tools')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
                         <h2 id="detail-header-title" class="text-xs font-bold">تفاصيل المدرسة العلاجية</h2>
                     </div>
                 </header>
@@ -355,7 +361,7 @@
             <div id="view-worksheets-hub" class="view-section hidden flex flex-col min-h-screen">
                 <header class="bg-blue-900 text-white px-4 py-3.5 flex items-center justify-between shadow shrink-0">
                     <div class="flex items-center space-x-3 space-x-reverse">
-                        <button onclick="switchView('home')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
+                        <button onclick="sanadBackTo('home')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
                         <div>
                             <h2 class="text-xs font-bold">تصميم ورقة عمل</h2>
                             <p class="text-[10px] text-cyan-200">صمّم ورقة عمل علاجية مخصصة خلال دقائق</p>
@@ -392,7 +398,7 @@
             <div id="view-worksheet-wizard" class="view-section hidden flex flex-col min-h-screen">
                 <header class="bg-blue-900 text-white px-4 py-3.5 flex items-center justify-between shadow shrink-0">
                     <div class="flex items-center space-x-3 space-x-reverse">
-                        <button onclick="switchView('worksheets-hub')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
+                        <button onclick="sanadBackTo('worksheets-hub')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
                         <h2 id="wizard-header-title" class="text-xs font-bold">معالج إنشاء ورقة العمل (خطوة 1 من 5)</h2>
                     </div>
                 </header>
@@ -450,7 +456,7 @@
             <div id="view-my-worksheets-programs" class="view-section hidden flex flex-col min-h-screen">
                 <header class="bg-blue-900 text-white px-4 py-3.5 flex items-center justify-between shadow shrink-0">
                     <div class="flex items-center space-x-3 space-x-reverse">
-                        <button onclick="switchView('worksheets-hub')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
+                        <button onclick="sanadBackTo('worksheets-hub')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
                         <h2 class="text-xs font-bold">أوراقي - البرامج العلاجية</h2>
                     </div>
                 </header>
@@ -518,7 +524,7 @@
             <div id="view-team" class="view-section hidden flex flex-col min-h-screen">
                 <header class="bg-blue-900 text-white px-4 py-3.5 flex items-center justify-between shadow shrink-0">
                     <div class="flex items-center space-x-3 space-x-reverse">
-                        <button onclick="switchView('home')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
+                        <button onclick="sanadBackTo('home')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
                         <div>
                             <h2 class="text-xs font-bold">فريق العلاج</h2>
                             <p class="text-[10px] text-cyan-200">تعاون مع فريقك لإدارة الحالات وخطط الرعاية المشتركة</p>
@@ -615,7 +621,7 @@
             <div id="view-clients" class="view-section hidden flex flex-col min-h-screen bg-slate-50">
                 <header class="bg-blue-900 text-white px-4 py-3.5 flex items-center justify-between shadow shrink-0">
                     <div class="flex items-center space-x-3 space-x-reverse">
-                        <button onclick="switchView('home')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
+                        <button onclick="sanadBackTo('home')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
                         <div>
                             <h2 class="text-xs font-bold">العملاء</h2>
                             <p class="text-[10px] text-cyan-200">إدارة ملفات العملاء والمتابعة العلاجية</p>
@@ -670,7 +676,7 @@
             <div id="view-session-planning" class="view-section hidden flex flex-col min-h-screen">
                 <header class="bg-blue-900 text-white px-4 py-3.5 flex items-center justify-between shadow shrink-0">
                     <div class="flex items-center space-x-3 space-x-reverse">
-                        <button onclick="switchView('home')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
+                        <button onclick="sanadBackTo('home')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
                         <div>
                             <h2 class="text-xs font-bold">تحضير الجلسات</h2>
                             <p class="text-[10px] text-cyan-200">خطط جلستك القادمة خطوة بخطوة</p>
@@ -720,10 +726,65 @@
                 <div id="session-plan-preview-container" class="hidden flex-1 flex flex-col bg-slate-100 overflow-y-auto"></div>
             </div>
 
-            <!-- Other views placeholders -->
-            <div id="view-case-formulation" class="view-section hidden flex flex-col min-h-screen"><header class="bg-blue-900 text-white px-4 p-3.5 flex"><button onclick="switchView('home')" class="text-white ml-2"><i class="fa-solid fa-arrow-right"></i></button><h2 class="text-xs font-bold">تحليل الحالة</h2></header><div class="p-4 text-xs">تحليل الحالة</div></div>
-            <div id="view-appointments" class="view-section hidden flex flex-col min-h-screen"><header class="bg-blue-900 text-white px-4 p-3.5 flex"><button onclick="switchView('home')" class="text-white ml-2"><i class="fa-solid fa-arrow-right"></i></button><h2 class="text-xs font-bold">المواعيد</h2></header><div class="p-4 text-xs" id="appointments-container">المواعيد</div></div>
-            <div id="view-ai-chat" class="view-section hidden flex flex-col min-h-screen"><header class="bg-blue-900 text-white px-4 p-3.5 flex"><h2 class="text-xs font-bold">مساعد سند الذكي</h2></header><div class="p-4 text-xs flex-1 flex flex-col justify-between"><div id="ai-chat-history"></div><input type="text" id="ai-chat-input" placeholder="اكتب سؤالك..." class="border p-2 rounded-xl"></div></div>
+            <!-- ==================== VIEW: 🧠 CASE FORMULATION ==================== -->
+            <div id="view-case-formulation" class="view-section hidden flex flex-col min-h-screen bg-slate-50">
+                <header class="bg-blue-900 text-white px-4 py-3.5 flex items-center justify-between shadow shrink-0">
+                    <div class="flex items-center space-x-3 space-x-reverse">
+                        <button onclick="sanadBackTo('home')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
+                        <div>
+                            <h2 class="text-xs font-bold">تحليل الحالة</h2>
+                            <p class="text-[10px] text-cyan-200">صياغة سريرية منظمة وحفظها في ملف الحالة</p>
+                        </div>
+                    </div>
+                    <button onclick="openNewCaseFormulation()" class="px-3 py-1.5 bg-cyan-500 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-1 space-x-reverse">
+                        <i class="fa-solid fa-plus text-[10px]"></i><span>تحليل جديد</span>
+                    </button>
+                </header>
+                <div id="case-formulation-container" class="p-4 space-y-4 flex-1 overflow-y-auto text-xs"></div>
+            </div>
+
+            <!-- ==================== VIEW: 📅 APPOINTMENTS ==================== -->
+            <div id="view-appointments" class="view-section hidden flex flex-col min-h-screen bg-slate-50">
+                <header class="bg-blue-900 text-white px-4 py-3.5 flex items-center justify-between shadow shrink-0">
+                    <div class="flex items-center space-x-3 space-x-reverse">
+                        <button onclick="sanadBackTo('home')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
+                        <div>
+                            <h2 class="text-xs font-bold">مواعيد الجلسات</h2>
+                            <p class="text-[10px] text-cyan-200">إضافة المواعيد وتعديلها ومتابعة حالتها</p>
+                        </div>
+                    </div>
+                    <button onclick="openAddAppointmentModal()" class="px-3 py-1.5 bg-cyan-500 text-white rounded-xl text-xs font-bold shadow flex items-center space-x-1 space-x-reverse">
+                        <i class="fa-solid fa-plus text-[10px]"></i><span>موعد جديد</span>
+                    </button>
+                </header>
+                <div id="appointments-container" class="p-4 space-y-4 flex-1 overflow-y-auto text-xs"></div>
+            </div>
+
+            <div id="view-ai-chat" class="view-section hidden flex flex-col min-h-screen bg-slate-50">
+                <header class="bg-blue-900 text-white px-4 py-3.5 flex items-center justify-between shadow shrink-0">
+                    <div class="flex items-center space-x-3 space-x-reverse">
+                        <button onclick="sanadBackTo('home')" class="text-white"><i class="fa-solid fa-arrow-right text-base"></i></button>
+                        <div>
+                            <h2 class="text-xs font-bold">مساعد سند الذكي</h2>
+                            <p class="text-[10px] text-cyan-200">دردشة مباشرة مدعومة بالذكاء الاصطناعي</p>
+                        </div>
+                    </div>
+                    <button onclick="openSanadAISettings()" title="إعداد اتصال الذكاء الاصطناعي" class="w-8 h-8 rounded-xl bg-blue-800 hover:bg-blue-700 flex items-center justify-center">
+                        <i class="fa-solid fa-gear text-xs"></i>
+                    </button>
+                </header>
+                <div class="p-4 text-xs flex-1 flex flex-col min-h-0 gap-3">
+                    <div id="ai-chat-history" class="space-y-3 flex-1 overflow-y-auto hide-scrollbar pb-2"></div>
+                    <div id="ai-chat-status" class="hidden text-[10px] text-slate-500 bg-white border border-slate-200 rounded-xl px-3 py-2"></div>
+                    <div class="flex items-end gap-2 shrink-0">
+                        <textarea id="ai-chat-input" rows="1" onkeydown="handleSanadChatKeydown(event)" placeholder="اكتب سؤالك إلى سند..." class="flex-1 border border-slate-200 bg-white p-3 rounded-2xl text-xs resize-none focus:outline-none focus:border-cyan-500 max-h-28"></textarea>
+                        <button id="ai-chat-send-btn" onclick="sendSanadChatMessage()" class="w-11 h-11 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white flex items-center justify-center shadow disabled:opacity-50" title="إرسال">
+                            <i class="fa-solid fa-paper-plane text-sm"></i>
+                        </button>
+                    </div>
+                    <p class="text-[9px] text-slate-400 text-center">لا تُدخل معلومات تعريفية حساسة عن العميل إلا وفق سياسات الخصوصية والموافقة المعتمدة لديك.</p>
+                </div>
+            </div>
 
         </div>
 
@@ -736,6 +797,25 @@
                     <button id="modal-submit-btn" class="flex-1 py-2.5 bg-blue-900 text-white rounded-xl font-bold">حفظ</button>
                     <button onclick="closeModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold">إلغاء</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Notifications Center (self-contained) -->
+        <div id="notifications-center" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4" onclick="if(event.target===this) closeNotificationsCenter()">
+            <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden text-xs max-h-[85vh] flex flex-col">
+                <div class="bg-blue-900 text-white p-4 flex items-center justify-between shrink-0">
+                    <div>
+                        <h3 class="font-black text-sm">الإشعارات</h3>
+                        <p class="text-[10px] text-cyan-200 mt-0.5">التحديثات والتنبيهات داخل سَنَد</p>
+                    </div>
+                    <button type="button" onclick="closeNotificationsCenter()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="p-3 border-b border-slate-100 flex gap-2 shrink-0">
+                    <button type="button" onclick="markAllNotificationsRead()" class="flex-1 py-2 bg-slate-100 text-slate-700 rounded-xl font-bold text-[10px]">تعليم الكل كمقروء</button>
+                    <button type="button" onclick="requestBrowserNotifications()" class="flex-1 py-2 bg-cyan-50 text-cyan-700 border border-cyan-100 rounded-xl font-bold text-[10px]">تفعيل إشعار المتصفح</button>
+                </div>
+                <div id="notifications-list" class="p-3 space-y-2.5 overflow-y-auto flex-1"></div>
+                <div class="px-3 pb-3 text-[9px] text-slate-400 leading-5 shrink-0">تظهر إشعارات التحديث داخل التطبيق تلقائيًا. إشعارات المتصفح تحتاج موافقتك، ولا تعمل كتحديث Push أثناء إغلاق التطبيق دون خدمة خادم مستقلة.</div>
             </div>
         </div>
 
@@ -819,6 +899,40 @@
         let audioChunks = [];
         let recordedAudioBlob = null;
         let activeRecordingAudioObjectUrls = {};
+
+        // In-app navigation history: keeps browser/Android Back inside SANAD.
+        let sanadCurrentView = null;
+        let sanadHistoryInitialized = false;
+        let sanadPopstateHandledAt = 0;
+
+        // SANAD AI chat state (isolated from the rest of the app).
+        const SANAD_AI_ENDPOINT_DEFAULT = '/api/sanad-chat';
+        let sanadChatMessages = [];
+        let sanadChatBusy = false;
+        // سياق العميل يبقى محلياً داخل الجهاز ولا يُرسل للخدمة الخارجية تلقائياً.
+        let sanadClientContextCache = null;
+        let sanadClientContextCacheId = null;
+        let sanadChatAnnouncedClientId = null;
+        let recordingIsActive = false;
+        let speechShouldRun = false;
+        let speechRecognitionBlocked = false;
+        let activeRecordingStartedAt = null;
+
+        // Global Search State
+        let globalSearchCache = [];
+        let globalSearchTimer = null;
+
+        // In-app Notifications State (kept outside IndexedDB to avoid changing its schema/version)
+        const SANAD_APP_VERSION = '2026.09.10-recorder-search-notifications-1';
+        const SANAD_RELEASE_NOTIFICATIONS = [
+            {
+                id: 'release-2026-09-10-recorder-search-notifications-1',
+                title: 'تحديث جديد في سَنَد',
+                body: 'تم تحسين المسجل الصوتي والتفريغ المباشر، وتفعيل البحث العام، وإضافة مركز إشعارات حقيقي داخل التطبيق.',
+                date: '10 سبتمبر 2026',
+                version: SANAD_APP_VERSION
+            }
+        ];
 
         let wizardData = { approach: '', ageGroup: '', problem: '', goal: '', level: '' };
         let currentActiveWorksheet = {
@@ -1384,6 +1498,7 @@
                 checkProfileStatus();
                 renderTherapeuticApproachesList();
                 renderInitialScreeningLists();
+                initializeSanadNotifications();
             } catch(err) {
                 console.error("Init failed:", err);
             }
@@ -1397,13 +1512,15 @@
             setTimeout(() => t.classList.add('hidden'), 3000);
         }
 
-        function switchView(vName) {
+        function switchView(vName, navOptions = {}) {
             cleanupWorksheetObjectUrl();
+            const previousView = sanadCurrentView;
             document.querySelectorAll('.view-section').forEach(v => v.classList.add('hidden'));
             const target = document.getElementById('view-' + vName);
             if(target) {
                 target.classList.remove('hidden');
                 target.scrollTop = 0;
+                sanadCurrentView = vName;
             }
             const nav = document.getElementById('bottom-nav');
             if(['home', 'clients', 'ai-chat', 'appointments', 'tools', 'psychometrics'].includes(vName)) {
@@ -1412,9 +1529,19 @@
                 nav.classList.add('hidden');
             }
 
+            // Register only real forward navigation. popstate renders without creating a new history entry.
+            if(sanadHistoryInitialized && !navOptions.fromHistory && previousView !== vName && vName !== 'welcome') {
+                history.pushState({ sanadApp: true, view: vName }, '', window.location.href);
+            }
+
+            closeGlobalSearchResults();
+            if(vName === 'home') updateNotificationBadge();
+            if(vName === 'ai-chat') initializeSanadChat();
             if(vName === 'team') loadTeamData();
             if(vName === 'session-setup') populateClientDropdown();
             if(vName === 'session-planning') loadSessionPlanning();
+            if(vName === 'case-formulation') loadCaseFormulationModule();
+            if(vName === 'appointments') loadAppointmentsModule();
             if(vName === 'clients') {
                 document.getElementById('clients-main-container').classList.add('hidden');
                 document.getElementById('client-profile-container').classList.add('hidden');
@@ -1422,6 +1549,46 @@
                 loadClients();
             }
         }
+
+        function initializeSanadNavigationHistory(initialView = 'home') {
+            if(sanadHistoryInitialized) return;
+            sanadHistoryInitialized = true;
+            sanadCurrentView = initialView;
+            // Root + guard keep the first Back press inside the single-page app.
+            history.replaceState({ sanadApp: true, view: initialView, root: true }, '', window.location.href);
+            history.pushState({ sanadApp: true, view: initialView, guard: true }, '', window.location.href);
+        }
+
+        function sanadBackTo(fallbackView = 'home') {
+            if(sanadHistoryInitialized && history.state && history.state.sanadApp) {
+                const before = sanadCurrentView;
+                history.back();
+                // Fallback for unusual embedded browsers that do not emit popstate reliably.
+                setTimeout(() => {
+                    if(sanadCurrentView === before) switchView(fallbackView, { fromHistory: true });
+                }, 250);
+            } else {
+                switchView(fallbackView, { fromHistory: true });
+            }
+        }
+
+        window.addEventListener('popstate', (event) => {
+            if(!sanadHistoryInitialized) return;
+            sanadPopstateHandledAt = Date.now();
+            const state = event.state;
+            if(state && state.sanadApp) {
+                const nextView = state.view || 'home';
+                switchView(nextView, { fromHistory: true });
+                // If the user reached the protected root, add a guard again so another Back does not leave SANAD.
+                if(state.root) {
+                    history.pushState({ sanadApp: true, view: nextView, guard: true }, '', window.location.href);
+                }
+                return;
+            }
+            // Unknown history entry: keep the user inside SANAD instead of navigating away.
+            history.pushState({ sanadApp: true, view: 'home', guard: true }, '', window.location.href);
+            switchView('home', { fromHistory: true });
+        });
 
         function checkProfileStatus() {
             const tx = db.transaction(['Profile'], 'readonly');
@@ -1433,6 +1600,7 @@
                     const docSpan = document.getElementById('ws-preview-doc-name');
                     if(docSpan) docSpan.innerText = `الأخصائي: ${p.name}`;
                     switchView('home');
+                    initializeSanadNavigationHistory('home');
                 } else {
                     switchView('welcome');
                 }
@@ -3874,72 +4042,249 @@
         }
 
         // ==================== SMART RECORDER REFACTORED MODULE ==================== -->
-        async function startActiveSessionRecording() {
-            const consent = document.getElementById('consent-checkbox').checked;
-            if(!consent) { showToast('يجب توثيق موافقة العميل على التسجيل أولاً', true); return; }
-
-            try {
-                currentMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            } catch (err) {
-                showToast('تعذر بدء التسجيل. يرجى السماح لسَنَد باستخدام الميكروفون.', true);
-                return;
-            }
-
-            const clientName = document.getElementById('setup-client-select').value;
-            const sessionType = document.getElementById('setup-session-type').value;
-
-            currentSessionMeta = { clientName, sessionType, date: '10 سبتمبر 2026', timestamp: Date.now() };
-            document.getElementById('active-session-title').innerText = `تسجيل جلسة: ${clientName} (${sessionType})`;
-            accumulatedSpeechText = '';
-            document.getElementById('live-speech-box').innerText = 'جاري الاستماع لصوتك عبر الميكروفون...';
-            
-            activeSeconds = 0;
-            isLivePaused = false;
-            switchView('active-recording');
-            document.getElementById('active-timer').innerText = '00:00';
-
-            activeTimerInterval = setInterval(() => {
-                if(!isLivePaused) {
-                    activeSeconds++;
-                    const mins = String(Math.floor(activeSeconds / 60)).padStart(2, '0');
-                    const secs = String(activeSeconds % 60).padStart(2, '0');
-                    document.getElementById('active-timer').innerText = `${mins}:${secs}`;
-                }
-            }, 1000);
-
-            try {
-                mediaRecorder = new MediaRecorder(currentMediaStream);
-                audioChunks = [];
-                mediaRecorder.ondataavailable = e => { if(e.data && e.data.size > 0) audioChunks.push(e.data); };
-                mediaRecorder.start();
-            } catch(e) {}
-
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (SpeechRecognition) {
-                recognition = new SpeechRecognition();
-                recognition.lang = 'ar-SA';
-                recognition.interimResults = true;
-                recognition.continuous = true;
-                recognition.onresult = (event) => {
-                    if (isLivePaused) return;
-                    let interim = '';
-                    for (let i = event.resultIndex; i < event.results.length; ++i) {
-                        if (event.results[i].isFinal) {
-                            accumulatedSpeechText += (accumulatedSpeechText ? ' ' : '') + event.results[i][0].transcript;
-                        } else {
-                            interim += event.results[i][0].transcript;
-                        }
-                    }
-                    document.getElementById('live-speech-box').innerText = accumulatedSpeechText + (interim ? ' (' + interim + ')' : '');
-                };
-                try { recognition.start(); } catch(e) {}
+        function setStartRecordingButtonState(state, label) {
+            const btn = document.getElementById('start-recording-btn');
+            const icon = document.getElementById('start-recording-icon');
+            const text = document.getElementById('start-recording-label');
+            if(!btn || !text || !icon) return;
+            if(state === 'waiting') {
+                btn.disabled = true;
+                btn.classList.add('opacity-70', 'cursor-wait');
+                icon.className = 'fa-solid fa-spinner fa-spin text-base';
+                text.innerText = label || 'بانتظار إذن الميكروفون...';
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('opacity-70', 'cursor-wait');
+                icon.className = 'fa-solid fa-microphone text-base';
+                text.innerText = label || 'تسجيل مباشر';
             }
         }
 
-        function stopActiveRecordingResources() {
+        function setRecordingLiveStatus(text, mode='recording') {
+            const box = document.getElementById('recording-live-status');
+            const dot = document.getElementById('recording-live-dot');
+            const txt = document.getElementById('recording-live-status-text');
+            if(txt) txt.innerText = text;
+            if(!box || !dot) return;
+            const modeClasses = {
+                recording: ['bg-rose-50','border-rose-100','text-rose-700','bg-rose-500'],
+                paused: ['bg-amber-50','border-amber-100','text-amber-700','bg-amber-500'],
+                ready: ['bg-emerald-50','border-emerald-100','text-emerald-700','bg-emerald-500'],
+                info: ['bg-blue-50','border-blue-100','text-blue-700','bg-blue-500']
+            };
+            box.className = 'w-full flex items-center justify-center gap-2 rounded-xl py-2 px-3 text-[10px] font-bold border';
+            dot.className = 'w-2.5 h-2.5 rounded-full';
+            const c = modeClasses[mode] || modeClasses.info;
+            box.classList.add(c[0],c[1],c[2]);
+            dot.classList.add(c[3]);
+            if(mode === 'recording') dot.classList.add('animate-pulse');
+        }
+
+        function updateRecordingClockLabel() {
+            const el = document.getElementById('recording-start-clock');
+            if(!el || !activeRecordingStartedAt) return;
+            try {
+                el.innerText = `• بدأ ${activeRecordingStartedAt.toLocaleTimeString('ar-DZ', {hour:'2-digit', minute:'2-digit', second:'2-digit'})}`;
+            } catch(e) {
+                el.innerText = '• التسجيل بدأ الآن';
+            }
+        }
+
+        function getPreferredSpeechLanguage() {
+            const lang = (navigator.language || '').toLowerCase();
+            if(lang.startsWith('ar')) return navigator.language;
+            return 'ar-DZ';
+        }
+
+        function renderLiveTranscript(interim='') {
+            const box = document.getElementById('live-speech-box');
+            if(!box) return;
+            const finalText = accumulatedSpeechText.trim();
+            if(finalText || interim.trim()) {
+                box.innerHTML = `${finalText ? `<span>${escapeHtmlText(finalText)}</span>` : ''}${interim.trim() ? `<span class="text-slate-400"> ${escapeHtmlText(interim.trim())}</span>` : ''}`;
+                box.scrollTop = box.scrollHeight;
+            } else {
+                box.innerText = 'لم يُلتقط كلام بعد. ابدأ الحديث بالقرب من الميكروفون...';
+            }
+        }
+
+        function escapeHtmlText(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function setupAndStartSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const box = document.getElementById('live-speech-box');
+            if(!SpeechRecognition) {
+                speechRecognitionBlocked = true;
+                if(box) box.innerText = 'التسجيل الصوتي يعمل، لكن هذا المتصفح لا يدعم التفريغ الصوتي المباشر. جرّب Google Chrome أو Microsoft Edge مع اتصال بالإنترنت.';
+                return;
+            }
+
+            speechRecognitionBlocked = false;
+            recognition = new SpeechRecognition();
+            recognition.lang = getPreferredSpeechLanguage();
+            recognition.interimResults = true;
+            recognition.continuous = true;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = () => {
+                if(box && !accumulatedSpeechText.trim()) box.innerText = 'التفريغ المباشر يعمل الآن... ابدأ الحديث.';
+            };
+
+            recognition.onresult = (event) => {
+                if(isLivePaused || !recordingIsActive) return;
+                let interim = '';
+                for(let i = event.resultIndex; i < event.results.length; i++) {
+                    const result = event.results[i];
+                    const text = (result[0] && result[0].transcript ? result[0].transcript : '').trim();
+                    if(!text) continue;
+                    if(result.isFinal) {
+                        accumulatedSpeechText += (accumulatedSpeechText.trim() ? ' ' : '') + text;
+                    } else {
+                        interim += (interim ? ' ' : '') + text;
+                    }
+                }
+                renderLiveTranscript(interim);
+            };
+
+            recognition.onerror = (event) => {
+                const err = event && event.error ? event.error : 'unknown';
+                if(['not-allowed','service-not-allowed'].includes(err)) {
+                    speechRecognitionBlocked = true;
+                    speechShouldRun = false;
+                    if(box) box.innerText = 'التسجيل الصوتي مستمر، لكن المتصفح لم يسمح بخدمة تحويل الكلام إلى نص. تحقق من إذن الميكروفون وإعدادات التعرف على الكلام.';
+                } else if(err === 'network') {
+                    if(box && !accumulatedSpeechText.trim()) box.innerText = 'التسجيل الصوتي مستمر. تعذر الاتصال مؤقتًا بخدمة التفريغ النصي؛ سيحاول سَنَد إعادة تشغيلها.';
+                } else if(err !== 'no-speech' && err !== 'aborted') {
+                    console.warn('Speech recognition error:', err);
+                }
+            };
+
+            recognition.onend = () => {
+                // Chrome may end recognition automatically after silence. Restart it while the recording is active.
+                if(speechShouldRun && recordingIsActive && !isLivePaused && !speechRecognitionBlocked) {
+                    setTimeout(() => {
+                        if(!speechShouldRun || !recordingIsActive || isLivePaused) return;
+                        try { recognition.start(); } catch(e) {}
+                    }, 350);
+                }
+            };
+
+            speechShouldRun = true;
+            try { recognition.start(); } catch(e) {
+                console.warn('Unable to start speech recognition:', e);
+            }
+        }
+
+        async function startActiveSessionRecording() {
+            const consent = document.getElementById('consent-checkbox').checked;
+            if(!consent) { showToast('يجب توثيق موافقة العميل على التسجيل أولاً', true); return; }
+            if(recordingIsActive) { showToast('هناك تسجيل جارٍ بالفعل', true); return; }
+            if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showToast('المتصفح الحالي لا يدعم الوصول المباشر إلى الميكروفون', true);
+                return;
+            }
+
+            setStartRecordingButtonState('waiting', 'بانتظار السماح بالميكروفون...');
+            showToast('بانتظار إذن الميكروفون. يبدأ التسجيل فقط بعد السماح.');
+
+            try {
+                currentMediaStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+            } catch (err) {
+                setStartRecordingButtonState('ready');
+                showToast('لم يبدأ التسجيل. يرجى السماح لسَنَد باستخدام الميكروفون ثم المحاولة مجددًا.', true);
+                return;
+            }
+
+            const clientName = document.getElementById('setup-client-select').value || 'جلسة عامة';
+            const sessionType = document.getElementById('setup-session-type').value || 'فردية';
+            const now = new Date();
+            currentSessionMeta = {
+                clientName,
+                sessionType,
+                date: now.toLocaleDateString('ar-DZ', {year:'numeric', month:'long', day:'numeric'}),
+                timestamp: now.getTime()
+            };
+            accumulatedSpeechText = '';
+            activeSeconds = 0;
+            isLivePaused = false;
+            speechShouldRun = false;
+            speechRecognitionBlocked = false;
+            audioChunks = [];
+
+            try {
+                mediaRecorder = new MediaRecorder(currentMediaStream);
+            } catch(e) {
+                currentMediaStream.getTracks().forEach(track => track.stop());
+                currentMediaStream = null;
+                setStartRecordingButtonState('ready');
+                showToast('تعذر إنشاء التسجيل الصوتي في هذا المتصفح.', true);
+                return;
+            }
+
+            mediaRecorder.ondataavailable = e => {
+                if(e.data && e.data.size > 0) audioChunks.push(e.data);
+            };
+            mediaRecorder.onerror = e => {
+                console.error('MediaRecorder error:', e);
+                showToast('حدث خطأ أثناء التسجيل الصوتي', true);
+            };
+
+            mediaRecorder.onstart = () => {
+                recordingIsActive = true;
+                activeRecordingStartedAt = new Date();
+                setStartRecordingButtonState('ready');
+                switchView('active-recording');
+                document.getElementById('active-session-title').innerText = `تسجيل جلسة: ${clientName} (${sessionType})`;
+                document.getElementById('active-timer').innerText = '00:00';
+                document.getElementById('live-speech-box').innerText = 'يتم تشغيل التفريغ المباشر...';
+                setRecordingLiveStatus('● التسجيل جارٍ الآن', 'recording');
+                updateRecordingClockLabel();
+
+                clearInterval(activeTimerInterval);
+                activeTimerInterval = setInterval(() => {
+                    if(!isLivePaused && recordingIsActive) {
+                        activeSeconds++;
+                        const mins = String(Math.floor(activeSeconds / 60)).padStart(2, '0');
+                        const secs = String(activeSeconds % 60).padStart(2, '0');
+                        const timer = document.getElementById('active-timer');
+                        if(timer) timer.innerText = `${mins}:${secs}`;
+                    }
+                }, 1000);
+
+                setupAndStartSpeechRecognition();
+                showToast('بدأ التسجيل الآن');
+            };
+
+            try {
+                // Timeslice helps preserve chunks continuously instead of waiting only for stop().
+                mediaRecorder.start(1000);
+            } catch(e) {
+                currentMediaStream.getTracks().forEach(track => track.stop());
+                currentMediaStream = null;
+                mediaRecorder = null;
+                setStartRecordingButtonState('ready');
+                showToast('تعذر بدء التسجيل الصوتي.', true);
+            }
+        }
+
+        function stopActiveRecordingResources(stopTracks=true) {
             clearInterval(activeTimerInterval);
-            if(recognition) { try { recognition.stop(); } catch(e) {} recognition = null; }
-            if(currentMediaStream) {
+            activeTimerInterval = null;
+            speechShouldRun = false;
+            recordingIsActive = false;
+            if(recognition) {
+                recognition.onend = null;
+                try { recognition.stop(); } catch(e) {}
+                recognition = null;
+            }
+            if(stopTracks && currentMediaStream) {
                 currentMediaStream.getTracks().forEach(track => track.stop());
                 currentMediaStream = null;
             }
@@ -3953,21 +4298,40 @@
             mediaRecorder = null;
             audioChunks = [];
             recordedAudioBlob = null;
+            activeRecordingStartedAt = null;
+            setStartRecordingButtonState('ready');
             showToast('تم إلغاء التسجيل والرجوع');
             switchView('session-setup');
         }
 
         function togglePauseLiveRecording() {
+            if(!mediaRecorder) return;
             isLivePaused = !isLivePaused;
             const btn = document.getElementById('btn-pause-rec');
             if(isLivePaused) {
+                speechShouldRun = false;
                 if(recognition) { try { recognition.stop(); } catch(e) {} }
-                if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.pause();
-                btn.innerText = 'استئناف'; btn.className = 'py-2.5 bg-emerald-600 text-white rounded-xl font-bold shadow text-xs';
+                if(mediaRecorder.state === 'recording') {
+                    try { mediaRecorder.pause(); } catch(e) {}
+                }
+                setRecordingLiveStatus('التسجيل متوقف مؤقتًا', 'paused');
+                btn.innerText = 'استئناف';
+                btn.className = 'py-2.5 bg-emerald-600 text-white rounded-xl font-bold shadow text-xs';
             } else {
-                if(recognition) { try { recognition.start(); } catch(e) {} }
-                if(mediaRecorder && mediaRecorder.state === 'paused') mediaRecorder.resume();
-                btn.innerText = 'إيقاف مؤقت'; btn.className = 'py-2.5 bg-amber-500 text-white rounded-xl font-bold shadow text-xs';
+                if(mediaRecorder.state === 'paused') {
+                    try { mediaRecorder.resume(); } catch(e) {}
+                }
+                setRecordingLiveStatus('● التسجيل جارٍ الآن', 'recording');
+                btn.innerText = 'إيقاف مؤقت';
+                btn.className = 'py-2.5 bg-amber-500 text-white rounded-xl font-bold shadow text-xs';
+                if(!speechRecognitionBlocked) {
+                    speechShouldRun = true;
+                    if(recognition) {
+                        try { recognition.start(); } catch(e) {}
+                    } else {
+                        setupAndStartSpeechRecognition();
+                    }
+                }
             }
         }
 
@@ -3992,10 +4356,15 @@
         }
 
         async function promptSaveRecordingModal() {
-            stopActiveRecordingResources();
+            // Stop timer/transcription first, but keep the audio stream alive until MediaRecorder emits its final chunk.
+            stopActiveRecordingResources(false);
             recordedAudioBlob = await stopMediaRecorderAndGetBlob();
+            if(currentMediaStream) {
+                currentMediaStream.getTracks().forEach(track => track.stop());
+                currentMediaStream = null;
+            }
 
-            const finalDurationSec = activeSeconds || 5;
+            const finalDurationSec = activeSeconds || 1;
             const mins = Math.floor(finalDurationSec / 60);
             const secs = finalDurationSec % 60;
             const durationFormatted = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
@@ -4013,7 +4382,7 @@
                     title: customTitle,
                     clientName: currentSessionMeta.clientName || 'عام',
                     sessionType: currentSessionMeta.sessionType || 'فردية',
-                    date: '10 سبتمبر 2026',
+                    date: currentSessionMeta.date || new Date().toLocaleDateString('ar-DZ', {year:'numeric', month:'long', day:'numeric'}),
                     timestamp: Date.now(),
                     durationSeconds: finalDurationSec,
                     durationFormatted: `${durationFormatted} دقيقة`,
@@ -4027,6 +4396,7 @@
                 const tx = db.transaction(['Recordings'], 'readwrite');
                 tx.objectStore('Recordings').add(newRecording);
                 tx.oncomplete = () => {
+                    invalidateSanadClientContext();
                     showToast('تم حفظ التسجيل الصوتي في القائمة بنجاح');
                     closeModal();
                     switchView('recordings-library');
@@ -4053,7 +4423,7 @@
                     title,
                     clientName: 'عام',
                     sessionType: 'فردية',
-                    date: '10 سبتمبر 2026',
+                    date: new Date().toLocaleDateString('ar-DZ', {year:'numeric', month:'long', day:'numeric'}),
                     timestamp: Date.now(),
                     durationSeconds: 0,
                     durationFormatted: 'مرفق خارجي',
@@ -4066,6 +4436,7 @@
                 const tx = db.transaction(['Recordings'], 'readwrite');
                 tx.objectStore('Recordings').add(newRec);
                 tx.oncomplete = () => {
+                    invalidateSanadClientContext();
                     showToast('تم إدراج الملف الصوتي وحفظه');
                     closeModal();
                     switchView('recordings-library');
@@ -4239,12 +4610,1456 @@
                 const tx = db.transaction(['Recordings'], 'readwrite');
                 tx.objectStore('Recordings').delete(id);
                 tx.oncomplete = () => {
+                    invalidateSanadClientContext();
                     showToast('تم حذف التسجيل بنجاح');
                     closeModal();
                     loadRecordingsLibrary();
                 };
             });
             document.getElementById('modal-submit-btn').innerText = 'حذف نهائي';
+        }
+
+
+        // ==================== CASE FORMULATION MODULE ==================== -->
+        let currentEditingCaseFormulationId = null;
+
+        function loadCaseFormulationModule() {
+            currentEditingCaseFormulationId = null;
+            renderCaseFormulationsHome();
+        }
+
+        function renderCaseFormulationsHome() {
+            const container = document.getElementById('case-formulation-container');
+            if(!container || !db) return;
+
+            const tx = db.transaction(['CaseFormulations'], 'readonly');
+            tx.objectStore('CaseFormulations').getAll().onsuccess = e => {
+                const items = (e.target.result || []).sort((a,b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0));
+                let html = `
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="openNewCaseFormulation()" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs text-right hover:border-cyan-500 transition">
+                            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-900 flex items-center justify-center mb-2"><i class="fa-solid fa-file-circle-plus"></i></div>
+                            <h4 class="font-bold text-blue-900">تحليل حالة جديد</h4>
+                            <p class="text-[10px] text-slate-500 mt-1">صياغة سريرية وفق نموذج 5Ps</p>
+                        </button>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs text-right">
+                            <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-700 flex items-center justify-center mb-2"><i class="fa-solid fa-folder-open"></i></div>
+                            <h4 class="font-bold text-blue-900">التحليلات المحفوظة</h4>
+                            <p class="text-2xl font-black text-cyan-600 mt-1">${items.length}</p>
+                        </div>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-[10px] text-amber-900 leading-relaxed">
+                        <i class="fa-solid fa-triangle-exclamation ml-1"></i>
+                        هذه الأداة تنظّم معلومات الأخصائي ولا تستبدل الحكم السريري أو التشخيص المهني.
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center"><h3 class="font-bold text-blue-900">آخر تحليلات الحالات</h3></div>
+                `;
+
+                if(items.length === 0) {
+                    html += `<div class="bg-white p-7 rounded-2xl border border-slate-200 text-center text-slate-400">لا توجد تحليلات محفوظة حتى الآن</div>`;
+                } else {
+                    items.forEach(item => {
+                        const date = item.updatedAt ? new Date(item.updatedAt).toLocaleDateString('ar-DZ') : (item.date || '');
+                        html += `
+                            <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
+                                <div class="flex justify-between items-start gap-2">
+                                    <div>
+                                        <h4 class="font-bold text-blue-900 text-xs">${escapeHtml(item.clientName || 'حالة بدون اسم')}</h4>
+                                        <p class="text-[10px] text-slate-500 mt-0.5">${escapeHtml(item.presentingProblem || 'لا توجد شكوى رئيسية مدخلة')}</p>
+                                    </div>
+                                    <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-1 rounded-lg shrink-0">${date}</span>
+                                </div>
+                                <div class="flex space-x-1.5 space-x-reverse pt-1 border-t border-slate-100">
+                                    <button onclick="viewCaseFormulation(${item.id})" class="flex-1 py-2 bg-blue-50 text-blue-900 rounded-xl font-bold text-[10px]">عرض</button>
+                                    <button onclick="editCaseFormulation(${item.id})" class="flex-1 py-2 bg-cyan-50 text-cyan-700 rounded-xl font-bold text-[10px]">تعديل</button>
+                                    <button onclick="deleteCaseFormulation(${item.id})" class="px-3 py-2 bg-rose-50 text-rose-600 rounded-xl font-bold text-[10px]"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                html += `</div>`;
+                container.innerHTML = html;
+            };
+        }
+
+        function openNewCaseFormulation() {
+            currentEditingCaseFormulationId = null;
+            renderCaseFormulationForm(null);
+        }
+
+        function renderCaseFormulationForm(existing) {
+            const container = document.getElementById('case-formulation-container');
+            if(!container) return;
+            const tx = db.transaction(['Clients'], 'readonly');
+            tx.objectStore('Clients').getAll().onsuccess = e => {
+                const clients = (e.target.result || []).filter(c => c.status !== 'مؤرشف');
+                const selectedClientId = existing?.clientId || '';
+                let options = `<option value="">-- اختر العميل --</option>`;
+                clients.forEach(c => {
+                    options += `<option value="${c.id}" ${String(c.id) === String(selectedClientId) ? 'selected' : ''}>${escapeHtml(c.name || 'بدون اسم')} • ${escapeHtml(c.fileNumber || '')}</option>`;
+                });
+                const v = (key) => escapeHtml(existing?.[key] || '');
+                const today = existing?.date || new Date().toISOString().split('T')[0];
+
+                container.innerHTML = `
+                    <form onsubmit="saveCaseFormulation(event)" class="space-y-3">
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
+                            <div class="flex justify-between items-center border-b pb-2">
+                                <h3 class="font-bold text-blue-900">${existing ? 'تعديل تحليل الحالة' : 'تحليل حالة جديد'}</h3>
+                                <button type="button" onclick="renderCaseFormulationsHome()" class="text-slate-500 text-[10px] font-bold">إلغاء</button>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-blue-900 mb-1">العميل *</label>
+                                <select id="cf-client" onchange="prefillCaseFromClient()" required class="w-full border p-2.5 rounded-xl text-xs">${options}</select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div><label class="block font-bold text-blue-900 mb-1">تاريخ التحليل</label><input id="cf-date" type="date" value="${today}" class="w-full border p-2.5 rounded-xl text-xs"></div>
+                                <div><label class="block font-bold text-blue-900 mb-1">الحالة</label><select id="cf-status" class="w-full border p-2.5 rounded-xl text-xs"><option ${existing?.status==='مسودة'?'selected':''}>مسودة</option><option ${existing?.status==='مكتمل'?'selected':''}>مكتمل</option><option ${existing?.status==='للمراجعة'?'selected':''}>للمراجعة</option></select></div>
+                            </div>
+                            <div><label class="block font-bold text-blue-900 mb-1">المشكلة الحالية / سبب المراجعة *</label><textarea id="cf-presenting" rows="3" required class="w-full border p-2.5 rounded-xl text-xs" placeholder="ما الذي دفع العميل للمراجعة الآن؟">${v('presentingProblem')}</textarea></div>
+                            <div><label class="block font-bold text-blue-900 mb-1">الأعراض والصعوبات الحالية</label><textarea id="cf-symptoms" rows="3" class="w-full border p-2.5 rounded-xl text-xs" placeholder="الأعراض، الشدة، التكرار، المدة، أثرها الوظيفي...">${v('currentSymptoms')}</textarea></div>
+                            <div><label class="block font-bold text-blue-900 mb-1">بداية المشكلة ومسارها</label><textarea id="cf-course" rows="2" class="w-full border p-2.5 rounded-xl text-xs">${v('course')}</textarea></div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
+                            <h3 class="font-bold text-blue-900 border-b pb-2">صياغة 5Ps</h3>
+                            <div><label class="block font-bold text-slate-700 mb-1">1. العوامل المهيئة Predisposing</label><textarea id="cf-predisposing" rows="2" class="w-full border p-2.5 rounded-xl text-xs" placeholder="عوامل نمائية، أسرية، بيولوجية، تجارب سابقة...">${v('predisposing')}</textarea></div>
+                            <div><label class="block font-bold text-slate-700 mb-1">2. العوامل المفجّرة Precipitating</label><textarea id="cf-precipitating" rows="2" class="w-full border p-2.5 rounded-xl text-xs" placeholder="أحداث أو تغيرات سبقت تفاقم المشكلة...">${v('precipitating')}</textarea></div>
+                            <div><label class="block font-bold text-slate-700 mb-1">3. العوامل المُبقية Perpetuating</label><textarea id="cf-perpetuating" rows="2" class="w-full border p-2.5 rounded-xl text-xs" placeholder="تجنب، أفكار، تعزيزات، ضغوط، أنماط علاقات...">${v('perpetuating')}</textarea></div>
+                            <div><label class="block font-bold text-slate-700 mb-1">4. العوامل الواقية Protective</label><textarea id="cf-protective" rows="2" class="w-full border p-2.5 rounded-xl text-xs" placeholder="دعم اجتماعي، دافعية، موارد، مهارات...">${v('protective')}</textarea></div>
+                            <div><label class="block font-bold text-slate-700 mb-1">5. المشكلة الراهنة Presenting</label><textarea id="cf-presenting5p" rows="2" class="w-full border p-2.5 rounded-xl text-xs" placeholder="تلخيص مركز للمشكلة كما تظهر حاليًا">${v('presenting5p')}</textarea></div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
+                            <h3 class="font-bold text-blue-900 border-b pb-2">مجالات التقييم السريري</h3>
+                            <div><label class="block font-bold text-blue-900 mb-1">العوامل البيولوجية / الطبية</label><textarea id="cf-bio" rows="2" class="w-full border p-2.5 rounded-xl text-xs">${v('biological')}</textarea></div>
+                            <div><label class="block font-bold text-blue-900 mb-1">العوامل المعرفية والانفعالية والسلوكية</label><textarea id="cf-psy" rows="2" class="w-full border p-2.5 rounded-xl text-xs">${v('psychological')}</textarea></div>
+                            <div><label class="block font-bold text-blue-900 mb-1">العوامل الأسرية والاجتماعية والدراسية/المهنية</label><textarea id="cf-social" rows="2" class="w-full border p-2.5 rounded-xl text-xs">${v('social')}</textarea></div>
+                            <div><label class="block font-bold text-blue-900 mb-1">نقاط القوة والموارد</label><textarea id="cf-strengths" rows="2" class="w-full border p-2.5 rounded-xl text-xs">${v('strengths')}</textarea></div>
+                            <div><label class="block font-bold text-rose-700 mb-1">تقييم المخاطر</label><textarea id="cf-risk" rows="2" class="w-full border border-rose-200 p-2.5 rounded-xl text-xs" placeholder="أفكار إيذاء النفس/الآخرين، إهمال، عنف، حماية...">${v('risk')}</textarea></div>
+                            <div><label class="block font-bold text-blue-900 mb-1">الفرضيات التشخيصية / التشخيصات التفريقية</label><textarea id="cf-diagnostic" rows="2" class="w-full border p-2.5 rounded-xl text-xs">${v('diagnosticHypotheses')}</textarea></div>
+                            <div><label class="block font-bold text-blue-900 mb-1">الأهداف والتوصيات الأولية</label><textarea id="cf-goals" rows="3" class="w-full border p-2.5 rounded-xl text-xs">${v('goals')}</textarea></div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 sticky bottom-20">
+                            <button type="button" onclick="previewGeneratedCaseSummary()" class="py-3 bg-white border border-blue-200 text-blue-900 rounded-xl font-bold shadow">معاينة الصياغة</button>
+                            <button type="submit" class="py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl font-bold shadow">${existing ? 'حفظ التعديلات' : 'حفظ التحليل'}</button>
+                        </div>
+                    </form>
+                `;
+            };
+        }
+
+        function prefillCaseFromClient() {
+            const select = document.getElementById('cf-client');
+            if(!select || !select.value) return;
+            const tx = db.transaction(['Clients'], 'readonly');
+            tx.objectStore('Clients').get(Number(select.value)).onsuccess = e => {
+                const c = e.target.result;
+                if(!c) return;
+                const presenting = document.getElementById('cf-presenting');
+                if(presenting && !presenting.value.trim()) presenting.value = c.reason || '';
+            };
+        }
+
+        function collectCaseFormulationFormData() {
+            const clientSelect = document.getElementById('cf-client');
+            const clientOption = clientSelect?.options[clientSelect.selectedIndex];
+            return {
+                clientId: clientSelect?.value ? Number(clientSelect.value) : null,
+                clientName: clientOption ? clientOption.text.split(' • ')[0] : '',
+                date: document.getElementById('cf-date')?.value || new Date().toISOString().split('T')[0],
+                status: document.getElementById('cf-status')?.value || 'مسودة',
+                presentingProblem: document.getElementById('cf-presenting')?.value.trim() || '',
+                currentSymptoms: document.getElementById('cf-symptoms')?.value.trim() || '',
+                course: document.getElementById('cf-course')?.value.trim() || '',
+                predisposing: document.getElementById('cf-predisposing')?.value.trim() || '',
+                precipitating: document.getElementById('cf-precipitating')?.value.trim() || '',
+                perpetuating: document.getElementById('cf-perpetuating')?.value.trim() || '',
+                protective: document.getElementById('cf-protective')?.value.trim() || '',
+                presenting5p: document.getElementById('cf-presenting5p')?.value.trim() || '',
+                biological: document.getElementById('cf-bio')?.value.trim() || '',
+                psychological: document.getElementById('cf-psy')?.value.trim() || '',
+                social: document.getElementById('cf-social')?.value.trim() || '',
+                strengths: document.getElementById('cf-strengths')?.value.trim() || '',
+                risk: document.getElementById('cf-risk')?.value.trim() || '',
+                diagnosticHypotheses: document.getElementById('cf-diagnostic')?.value.trim() || '',
+                goals: document.getElementById('cf-goals')?.value.trim() || ''
+            };
+        }
+
+        function buildCaseFormulationSummary(d) {
+            const part = (title, value) => value ? `${title}:\n${value}` : `${title}:\nغير مدخل`;
+            return [
+                `العميل: ${d.clientName || 'غير محدد'}`,
+                `تاريخ التحليل: ${d.date || ''}`,
+                '',
+                part('المشكلة الحالية', d.presentingProblem),
+                part('الأعراض والصعوبات الحالية', d.currentSymptoms),
+                part('بداية المشكلة ومسارها', d.course),
+                '',
+                'صياغة 5Ps:',
+                part('العوامل المهيئة', d.predisposing),
+                part('العوامل المفجرة', d.precipitating),
+                part('العوامل المبقية', d.perpetuating),
+                part('العوامل الواقية', d.protective),
+                part('المشكلة الراهنة', d.presenting5p || d.presentingProblem),
+                '',
+                part('العوامل البيولوجية / الطبية', d.biological),
+                part('العوامل المعرفية والانفعالية والسلوكية', d.psychological),
+                part('العوامل الأسرية والاجتماعية والدراسية/المهنية', d.social),
+                part('نقاط القوة والموارد', d.strengths),
+                part('تقييم المخاطر', d.risk),
+                part('الفرضيات التشخيصية / التشخيصات التفريقية', d.diagnosticHypotheses),
+                part('الأهداف والتوصيات الأولية', d.goals)
+            ].join('\n\n');
+        }
+
+        function previewGeneratedCaseSummary() {
+            const data = collectCaseFormulationFormData();
+            if(!data.clientId || !data.presentingProblem) {
+                showToast('اختر العميل واكتب المشكلة الحالية أولاً', true);
+                return;
+            }
+            const summary = buildCaseFormulationSummary(data);
+            openModal('معاينة صياغة الحالة', `<div class="bg-slate-50 border rounded-xl p-3 whitespace-pre-wrap text-[11px] leading-relaxed">${escapeHtml(summary)}</div>`, closeModal);
+            document.getElementById('modal-submit-btn').innerText = 'إغلاق';
+        }
+
+        function saveCaseFormulation(event) {
+            event.preventDefault();
+            const data = collectCaseFormulationFormData();
+            if(!data.clientId || !data.presentingProblem) {
+                showToast('العميل والمشكلة الحالية حقول إلزامية', true);
+                return;
+            }
+            data.generatedSummary = buildCaseFormulationSummary(data);
+            data.updatedAt = Date.now();
+            const store = db.transaction(['CaseFormulations'], 'readwrite').objectStore('CaseFormulations');
+
+            if(currentEditingCaseFormulationId) {
+                store.get(currentEditingCaseFormulationId).onsuccess = e => {
+                    const old = e.target.result || {};
+                    const merged = { ...old, ...data, id: currentEditingCaseFormulationId, createdAt: old.createdAt || Date.now() };
+                    const tx2 = db.transaction(['CaseFormulations'], 'readwrite');
+                    tx2.objectStore('CaseFormulations').put(merged);
+                    tx2.oncomplete = () => { invalidateSanadClientContext(data.clientId); showToast('تم تحديث تحليل الحالة'); currentEditingCaseFormulationId = null; renderCaseFormulationsHome(); };
+                };
+            } else {
+                data.createdAt = Date.now();
+                const tx = db.transaction(['CaseFormulations'], 'readwrite');
+                tx.objectStore('CaseFormulations').add(data);
+                tx.oncomplete = () => { invalidateSanadClientContext(data.clientId); showToast('تم حفظ تحليل الحالة'); renderCaseFormulationsHome(); };
+            }
+        }
+
+        function viewCaseFormulation(id) {
+            const tx = db.transaction(['CaseFormulations'], 'readonly');
+            tx.objectStore('CaseFormulations').get(id).onsuccess = e => {
+                const d = e.target.result;
+                if(!d) return;
+                const container = document.getElementById('case-formulation-container');
+                const summary = d.generatedSummary || buildCaseFormulationSummary(d);
+                container.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+                            <div class="flex justify-between items-start gap-2 border-b pb-2 mb-3">
+                                <div><h3 class="font-black text-blue-900 text-sm">${escapeHtml(d.clientName || '')}</h3><p class="text-[10px] text-slate-500">${escapeHtml(d.date || '')} • ${escapeHtml(d.status || 'مسودة')}</p></div>
+                                <button onclick="renderCaseFormulationsHome()" class="text-slate-500 font-bold text-[10px]">رجوع</button>
+                            </div>
+                            <div class="whitespace-pre-wrap leading-relaxed text-[11px] text-slate-700">${escapeHtml(summary)}</div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="editCaseFormulation(${id})" class="py-3 bg-blue-900 text-white rounded-xl font-bold">تعديل التحليل</button>
+                            <button onclick="copyCaseFormulation(${id})" class="py-3 bg-cyan-50 text-cyan-800 border border-cyan-200 rounded-xl font-bold">نسخ الصياغة</button>
+                        </div>
+                    </div>
+                `;
+            };
+        }
+
+        function editCaseFormulation(id) {
+            const tx = db.transaction(['CaseFormulations'], 'readonly');
+            tx.objectStore('CaseFormulations').get(id).onsuccess = e => {
+                if(!e.target.result) return;
+                currentEditingCaseFormulationId = id;
+                renderCaseFormulationForm(e.target.result);
+            };
+        }
+
+        function deleteCaseFormulation(id) {
+            openModal('حذف تحليل الحالة؟', '<p class="text-slate-700">سيتم حذف هذا التحليل المحفوظ نهائيًا من الجهاز.</p>', () => {
+                const tx = db.transaction(['CaseFormulations'], 'readwrite');
+                tx.objectStore('CaseFormulations').delete(id);
+                tx.oncomplete = () => { closeModal(); showToast('تم حذف التحليل'); renderCaseFormulationsHome(); };
+            });
+            document.getElementById('modal-submit-btn').innerText = 'حذف';
+        }
+
+        function copyCaseFormulation(id) {
+            const tx = db.transaction(['CaseFormulations'], 'readonly');
+            tx.objectStore('CaseFormulations').get(id).onsuccess = async e => {
+                const d = e.target.result;
+                if(!d) return;
+                const txt = d.generatedSummary || buildCaseFormulationSummary(d);
+                try { await navigator.clipboard.writeText(txt); showToast('تم نسخ صياغة الحالة'); }
+                catch(err) { showToast('تعذر النسخ التلقائي على هذا المتصفح', true); }
+            };
+        }
+
+        // ==================== APPOINTMENTS MODULE ==================== -->
+        let currentAppointmentFilter = 'upcoming';
+
+        function loadAppointmentsModule() {
+            renderAppointmentsModule();
+        }
+
+        function appointmentDateTime(a) {
+            if(!a?.date) return new Date(0);
+            const time = a.time || '00:00';
+            const dt = new Date(`${a.date}T${time}:00`);
+            return isNaN(dt.getTime()) ? new Date(a.date) : dt;
+        }
+
+        function setAppointmentFilter(filter) {
+            currentAppointmentFilter = filter;
+            renderAppointmentsModule();
+        }
+
+        function renderAppointmentsModule() {
+            const container = document.getElementById('appointments-container');
+            if(!container || !db) return;
+            const tx = db.transaction(['Appointments'], 'readonly');
+            tx.objectStore('Appointments').getAll().onsuccess = e => {
+                const items = e.target.result || [];
+                const now = new Date();
+                const today = new Date().toISOString().split('T')[0];
+                const upcomingCount = items.filter(a => appointmentDateTime(a) >= now && a.status !== 'ملغي').length;
+                const todayCount = items.filter(a => a.date === today && a.status !== 'ملغي').length;
+                const completedCount = items.filter(a => a.status === 'مكتمل').length;
+
+                let filtered = items.slice();
+                if(currentAppointmentFilter === 'upcoming') filtered = filtered.filter(a => appointmentDateTime(a) >= now && a.status !== 'ملغي' && a.status !== 'مكتمل');
+                else if(currentAppointmentFilter === 'today') filtered = filtered.filter(a => a.date === today && a.status !== 'ملغي');
+                else if(currentAppointmentFilter === 'completed') filtered = filtered.filter(a => a.status === 'مكتمل');
+                else if(currentAppointmentFilter === 'cancelled') filtered = filtered.filter(a => a.status === 'ملغي');
+                filtered.sort((a,b) => appointmentDateTime(a) - appointmentDateTime(b));
+
+                const filterBtn = (key, label) => `<button onclick="setAppointmentFilter('${key}')" class="px-3 py-1.5 rounded-xl text-[10px] font-bold whitespace-nowrap ${currentAppointmentFilter===key?'bg-blue-900 text-white':'bg-white text-slate-600 border border-slate-200'}">${label}</button>`;
+
+                let html = `
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-white p-3 rounded-2xl border border-slate-200"><span class="block text-lg font-black text-blue-900">${upcomingCount}</span><span class="text-[9px] text-slate-500">قادمة</span></div>
+                        <div class="bg-white p-3 rounded-2xl border border-slate-200"><span class="block text-lg font-black text-cyan-600">${todayCount}</span><span class="text-[9px] text-slate-500">اليوم</span></div>
+                        <div class="bg-white p-3 rounded-2xl border border-slate-200"><span class="block text-lg font-black text-emerald-600">${completedCount}</span><span class="text-[9px] text-slate-500">مكتملة</span></div>
+                    </div>
+                    <div class="flex space-x-1.5 space-x-reverse overflow-x-auto hide-scrollbar pb-1">
+                        ${filterBtn('upcoming','القادمة')}${filterBtn('today','اليوم')}${filterBtn('all','الكل')}${filterBtn('completed','مكتملة')}${filterBtn('cancelled','ملغاة')}
+                    </div>
+                    <div class="space-y-2">
+                `;
+
+                if(filtered.length === 0) {
+                    html += `<div class="bg-white p-8 rounded-2xl border border-slate-200 text-center space-y-3"><i class="fa-regular fa-calendar-xmark text-3xl text-slate-300"></i><p class="text-slate-400">لا توجد مواعيد ضمن هذا التصنيف</p><button onclick="openAddAppointmentModal()" class="px-4 py-2 bg-blue-900 text-white rounded-xl font-bold">+ إضافة موعد</button></div>`;
+                } else {
+                    filtered.forEach(a => {
+                        let badge = 'bg-blue-50 text-blue-700';
+                        if(a.status === 'مكتمل') badge = 'bg-emerald-50 text-emerald-700';
+                        else if(a.status === 'ملغي') badge = 'bg-rose-50 text-rose-700';
+                        else if(a.status === 'مؤكد') badge = 'bg-cyan-50 text-cyan-700';
+                        html += `
+                            <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs space-y-2.5">
+                                <div class="flex justify-between items-start gap-2">
+                                    <div>
+                                        <h4 class="font-bold text-blue-900 text-xs">${escapeHtml(a.clientName || a.title || 'موعد جلسة')}</h4>
+                                        <p class="text-[10px] text-slate-500 mt-0.5">${escapeHtml(a.sessionType || 'جلسة فردية')} • ${escapeHtml(a.duration || '50 دقيقة')}</p>
+                                    </div>
+                                    <span class="px-2 py-1 rounded-lg text-[9px] font-bold ${badge}">${escapeHtml(a.status || 'مجدول')}</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-[10px]">
+                                    <div><i class="fa-solid fa-calendar text-cyan-600 ml-1"></i><span class="font-bold">${escapeHtml(a.date || '-')}</span></div>
+                                    <div><i class="fa-solid fa-clock text-cyan-600 ml-1"></i><span class="font-bold">${escapeHtml(a.time || '-')}</span></div>
+                                    <div class="col-span-2"><i class="fa-solid fa-location-dot text-cyan-600 ml-1"></i>${escapeHtml(a.method || 'غير محدد')}</div>
+                                </div>
+                                ${a.notes ? `<p class="text-[10px] text-slate-600 bg-amber-50/50 p-2 rounded-lg">${escapeHtml(a.notes)}</p>` : ''}
+                                <div class="grid grid-cols-4 gap-1.5 pt-1 border-t border-slate-100">
+                                    <button onclick="editAppointment(${a.id})" class="py-2 bg-blue-50 text-blue-800 rounded-lg font-bold text-[9px]">تعديل</button>
+                                    <button onclick="markAppointmentCompleted(${a.id})" class="py-2 bg-emerald-50 text-emerald-700 rounded-lg font-bold text-[9px]">إكمال</button>
+                                    <button onclick="prepareAppointmentSession(${a.id})" class="py-2 bg-cyan-50 text-cyan-700 rounded-lg font-bold text-[9px]">تحضير</button>
+                                    <button onclick="deleteAppointment(${a.id})" class="py-2 bg-rose-50 text-rose-600 rounded-lg font-bold text-[9px]">حذف</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                html += `</div>`;
+                container.innerHTML = html;
+            };
+        }
+
+        function openAddAppointmentModal(existing = null) {
+            const tx = db.transaction(['Clients'], 'readonly');
+            tx.objectStore('Clients').getAll().onsuccess = e => {
+                const clients = (e.target.result || []).filter(c => c.status !== 'مؤرشف');
+                let options = `<option value="">-- اختر العميل --</option>`;
+                clients.forEach(c => options += `<option value="${c.id}" ${String(existing?.clientId||'')===String(c.id)?'selected':''}>${escapeHtml(c.name || '')} • ${escapeHtml(c.fileNumber || '')}</option>`);
+                const today = existing?.date || new Date().toISOString().split('T')[0];
+                const defaultTime = existing?.time || '17:00';
+                const selected = (val, current) => val === current ? 'selected' : '';
+
+                openModal(existing ? 'تعديل موعد الجلسة' : 'إضافة موعد جلسة', `
+                    <div class="space-y-3 text-xs">
+                        <div><label class="block font-bold text-blue-900 mb-1">العميل *</label><select id="appt-client" class="w-full border p-2.5 rounded-xl text-xs">${options}</select></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="block font-bold text-blue-900 mb-1">التاريخ *</label><input id="appt-date" type="date" value="${today}" class="w-full border p-2.5 rounded-xl text-xs"></div>
+                            <div><label class="block font-bold text-blue-900 mb-1">الوقت *</label><input id="appt-time" type="time" value="${defaultTime}" class="w-full border p-2.5 rounded-xl text-xs"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="block font-bold text-blue-900 mb-1">نوع الجلسة</label><select id="appt-type" class="w-full border p-2.5 rounded-xl text-xs"><option ${selected('فردية',existing?.sessionType)}>فردية</option><option ${selected('زوجية',existing?.sessionType)}>زوجية</option><option ${selected('أسرية',existing?.sessionType)}>أسرية</option><option ${selected('طفل أو مراهق',existing?.sessionType)}>طفل أو مراهق</option><option ${selected('متابعة',existing?.sessionType)}>متابعة</option></select></div>
+                            <div><label class="block font-bold text-blue-900 mb-1">المدة</label><select id="appt-duration" class="w-full border p-2.5 rounded-xl text-xs"><option ${selected('30 دقيقة',existing?.duration)}>30 دقيقة</option><option ${selected('45 دقيقة',existing?.duration)}>45 دقيقة</option><option ${selected('50 دقيقة',existing?.duration||'50 دقيقة')}>50 دقيقة</option><option ${selected('60 دقيقة',existing?.duration)}>60 دقيقة</option><option ${selected('90 دقيقة',existing?.duration)}>90 دقيقة</option></select></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="block font-bold text-blue-900 mb-1">الحالة</label><select id="appt-status" class="w-full border p-2.5 rounded-xl text-xs"><option ${selected('مجدول',existing?.status||'مجدول')}>مجدول</option><option ${selected('مؤكد',existing?.status)}>مؤكد</option><option ${selected('مكتمل',existing?.status)}>مكتمل</option><option ${selected('ملغي',existing?.status)}>ملغي</option></select></div>
+                            <div><label class="block font-bold text-blue-900 mb-1">طريقة الجلسة</label><select id="appt-method" class="w-full border p-2.5 rounded-xl text-xs"><option ${selected('حضوري',existing?.method||'حضوري')}>حضوري</option><option ${selected('أونلاين',existing?.method)}>أونلاين</option><option ${selected('زيارة منزلية',existing?.method)}>زيارة منزلية</option><option ${selected('هاتفية',existing?.method)}>هاتفية</option></select></div>
+                        </div>
+                        <div><label class="block font-bold text-blue-900 mb-1">عنوان/موضوع الجلسة</label><input id="appt-title" type="text" value="${escapeHtml(existing?.title || '')}" placeholder="مثال: جلسة متابعة القلق" class="w-full border p-2.5 rounded-xl text-xs"></div>
+                        <div><label class="block font-bold text-blue-900 mb-1">ملاحظات</label><textarea id="appt-notes" rows="2" class="w-full border p-2.5 rounded-xl text-xs" placeholder="تعليمات أو ملاحظات الموعد...">${escapeHtml(existing?.notes || '')}</textarea></div>
+                    </div>
+                `, () => saveAppointment(existing?.id || null));
+                document.getElementById('modal-submit-btn').innerText = existing ? 'حفظ التعديلات' : 'حفظ الموعد';
+            };
+        }
+
+        function saveAppointment(existingId = null) {
+            const clientSelect = document.getElementById('appt-client');
+            const date = document.getElementById('appt-date')?.value;
+            const time = document.getElementById('appt-time')?.value;
+            if(!clientSelect?.value || !date || !time) {
+                showToast('العميل والتاريخ والوقت حقول إلزامية', true);
+                return;
+            }
+            const clientName = clientSelect.options[clientSelect.selectedIndex].text.split(' • ')[0];
+            const data = {
+                clientId: Number(clientSelect.value),
+                clientName,
+                date,
+                time,
+                sessionType: document.getElementById('appt-type')?.value || 'فردية',
+                duration: document.getElementById('appt-duration')?.value || '50 دقيقة',
+                status: document.getElementById('appt-status')?.value || 'مجدول',
+                method: document.getElementById('appt-method')?.value || 'حضوري',
+                title: document.getElementById('appt-title')?.value.trim() || 'موعد جلسة',
+                notes: document.getElementById('appt-notes')?.value.trim() || '',
+                updatedAt: Date.now()
+            };
+            if(existingId) {
+                const readTx = db.transaction(['Appointments'], 'readonly');
+                readTx.objectStore('Appointments').get(existingId).onsuccess = e => {
+                    const old = e.target.result || {};
+                    const merged = { ...old, ...data, id: existingId, createdAt: old.createdAt || Date.now() };
+                    const tx = db.transaction(['Appointments'], 'readwrite');
+                    tx.objectStore('Appointments').put(merged);
+                    tx.oncomplete = () => { invalidateSanadClientContext(data.clientId); closeModal(); showToast('تم تحديث الموعد'); renderAppointmentsModule(); };
+                };
+            } else {
+                data.createdAt = Date.now();
+                const tx = db.transaction(['Appointments'], 'readwrite');
+                tx.objectStore('Appointments').add(data);
+                tx.oncomplete = () => { invalidateSanadClientContext(data.clientId); closeModal(); showToast('تم حفظ الموعد'); renderAppointmentsModule(); };
+            }
+        }
+
+        function editAppointment(id) {
+            const tx = db.transaction(['Appointments'], 'readonly');
+            tx.objectStore('Appointments').get(id).onsuccess = e => { if(e.target.result) openAddAppointmentModal(e.target.result); };
+        }
+
+        function markAppointmentCompleted(id) {
+            const tx = db.transaction(['Appointments'], 'readonly');
+            tx.objectStore('Appointments').get(id).onsuccess = e => {
+                const item = e.target.result;
+                if(!item) return;
+                item.status = 'مكتمل';
+                item.completedAt = Date.now();
+                item.updatedAt = Date.now();
+                const tx2 = db.transaction(['Appointments'], 'readwrite');
+                tx2.objectStore('Appointments').put(item);
+                tx2.oncomplete = () => { showToast('تم تعليم الموعد كمكتمل'); renderAppointmentsModule(); };
+            };
+        }
+
+        function deleteAppointment(id) {
+            openModal('حذف الموعد؟', '<p class="text-slate-700">سيتم حذف هذا الموعد نهائيًا من الجهاز.</p>', () => {
+                const tx = db.transaction(['Appointments'], 'readwrite');
+                tx.objectStore('Appointments').delete(id);
+                tx.oncomplete = () => { closeModal(); showToast('تم حذف الموعد'); renderAppointmentsModule(); };
+            });
+            document.getElementById('modal-submit-btn').innerText = 'حذف';
+        }
+
+        function prepareAppointmentSession(id) {
+            const tx = db.transaction(['Appointments'], 'readonly');
+            tx.objectStore('Appointments').get(id).onsuccess = e => {
+                const a = e.target.result;
+                if(!a) return;
+                switchView('session-planning');
+                setTimeout(() => openNewSessionPlanWithAppointment(a.id, a.clientName || a.title || ''), 80);
+            };
+        }
+
+
+        // ==================== GLOBAL SEARCH (SELF-CONTAINED) ====================
+        const globalSearchModules = [
+            { title:'المسجل الذكي', subtitle:'تسجيل الجلسات والتفريغ الصوتي', icon:'fa-microphone-lines', target:'session-setup', keywords:'تسجيل مسجل صوت جلسة جلسات تفريغ نص صوتي' },
+            { title:'تحليل الحالة', subtitle:'صياغة الحالة السريرية', icon:'fa-brain', target:'case-formulation', keywords:'تحليل حالة صياغة 5ps سريري' },
+            { title:'تصميم ورقة عمل', subtitle:'إنشاء وإدارة أوراق العمل', icon:'fa-file-pen', target:'worksheets-hub', keywords:'ورقة أوراق عمل worksheet تصميم' },
+            { title:'الفحص الأولي', subtitle:'DSM & UNDSM', icon:'fa-file-pen', target:'psychometrics', keywords:'فحص أولي dsm undsm اختبار مقياس تشخيص' },
+            { title:'أنشطة علاجية', subtitle:'مكتبة المدارس والتقنيات العلاجية', icon:'fa-leaf', target:'tools', keywords:'نشاط أنشطة علاج علاجية cbt dbt act تقنيات' },
+            { title:'تحضير الجلسات', subtitle:'تخطيط الجلسة القادمة', icon:'fa-calendar-days', target:'session-planning', keywords:'تحضير تخطيط جلسة أجندة' },
+            { title:'مواعيد الجلسات', subtitle:'إدارة المواعيد', icon:'fa-calendar-check', target:'appointments', keywords:'موعد مواعيد جلسات تقويم calendar' },
+            { title:'العملاء', subtitle:'ملفات العملاء والمتابعة', icon:'fa-users', target:'clients', keywords:'عميل عملاء ملف ملفات مرضى حالات' },
+            { title:'فريق العلاج', subtitle:'التعاون والرعاية المشتركة', icon:'fa-user-doctor', target:'team', keywords:'فريق علاج اعضاء أعضاء إشراف مهام حالات مشتركة' },
+            { title:'التسجيلات المحفوظة', subtitle:'الاستماع إلى التسجيلات السابقة', icon:'fa-folder-open', target:'recordings-library', keywords:'تسجيلات محفوظة صوت استماع' }
+        ];
+
+        function normalizeGlobalSearchText(value) {
+            return String(value || '')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u064B-\u065F\u0670]/g, '')
+                .replace(/[أإآ]/g, 'ا')
+                .replace(/ة/g, 'ه')
+                .replace(/ى/g, 'ي')
+                .replace(/ؤ/g, 'و')
+                .replace(/ئ/g, 'ي')
+                .trim();
+        }
+
+        function matchesGlobalSearch(query, ...fields) {
+            const q = normalizeGlobalSearchText(query);
+            if(!q) return false;
+            const hay = normalizeGlobalSearchText(fields.filter(Boolean).join(' '));
+            return q.split(/\s+/).every(part => hay.includes(part));
+        }
+
+        function handleGlobalSearchInput(event) {
+            clearTimeout(globalSearchTimer);
+            const value = event.target.value || '';
+            if(!value.trim()) { closeGlobalSearchResults(); return; }
+            globalSearchTimer = setTimeout(() => performGlobalSearch(value), 120);
+        }
+
+        function handleGlobalSearchKeydown(event) {
+            if(event.key === 'Enter') {
+                event.preventDefault();
+                runGlobalSearch();
+            } else if(event.key === 'Escape') {
+                closeGlobalSearchResults();
+            }
+        }
+
+        function runGlobalSearch() {
+            const input = document.getElementById('global-search-input');
+            if(!input) return;
+            performGlobalSearch(input.value || '');
+        }
+
+        function closeGlobalSearchResults() {
+            const el = document.getElementById('global-search-results');
+            if(el) el.classList.add('hidden');
+        }
+
+        function collectClientSearchResults(query) {
+            return new Promise(resolve => {
+                if(!db || !db.objectStoreNames.contains('Clients')) return resolve([]);
+                try {
+                    const tx = db.transaction(['Clients'], 'readonly');
+                    tx.objectStore('Clients').getAll().onsuccess = e => {
+                        const rows = (e.target.result || [])
+                            .filter(c => matchesGlobalSearch(query, c.name, c.fileNumber, c.phone, c.reason))
+                            .slice(0, 5)
+                            .map(c => ({ type:'client', title:c.name || 'عميل بدون اسم', subtitle:`ملف عميل${c.reason ? ' • ' + c.reason : ''}`, icon:'fa-user', clientId:c.id }));
+                        resolve(rows);
+                    };
+                    tx.onerror = () => resolve([]);
+                } catch(e) { resolve([]); }
+            });
+        }
+
+        async function performGlobalSearch(query) {
+            query = String(query || '').trim();
+            const resultsBox = document.getElementById('global-search-results');
+            if(!resultsBox) return;
+            if(!query) { closeGlobalSearchResults(); return; }
+
+            const moduleResults = globalSearchModules
+                .filter(item => matchesGlobalSearch(query, item.title, item.subtitle, item.keywords))
+                .map(item => ({ type:'module', ...item }));
+
+            const approachResults = therapeuticApproachesData
+                .filter(item => matchesGlobalSearch(query, item.title, item.tagline, item.id))
+                .slice(0, 5)
+                .map(item => ({ type:'approach', title:item.title, subtitle:'مدرسة/تقنية علاجية', icon:'fa-leaf', approachId:item.id }));
+
+            const dsmResults = dsmDisorders
+                .map((item,index) => ({item,index}))
+                .filter(x => matchesGlobalSearch(query, x.item.name, ...(x.item.symptoms || [])))
+                .slice(0, 5)
+                .map(x => ({ type:'dsm', title:x.item.name, subtitle:'DSM-5-TR • الفحص الأولي', icon:'fa-file-pen', screeningIndex:x.index }));
+
+            const undsmResults = undsmScales
+                .map((item,index) => ({item,index}))
+                .filter(x => matchesGlobalSearch(query, x.item.name, ...(x.item.items || [])))
+                .slice(0, 5)
+                .map(x => ({ type:'undsm', title:x.item.name, subtitle:'UNDSM • مقياس إيجابي', icon:'fa-chart-line', screeningIndex:x.index }));
+
+            const clientResults = await collectClientSearchResults(query);
+            globalSearchCache = [...moduleResults, ...clientResults, ...approachResults, ...dsmResults, ...undsmResults].slice(0, 12);
+
+            if(!globalSearchCache.length) {
+                resultsBox.innerHTML = `<div class="p-4 text-center text-slate-500 text-[11px]"><i class="fa-solid fa-magnifying-glass mb-2 text-slate-300 text-lg block"></i>لم يتم العثور على نتيجة داخل سَنَد لهذه العبارة.</div>`;
+            } else {
+                resultsBox.innerHTML = globalSearchCache.map((r,i) => `
+                    <button type="button" onclick="openGlobalSearchResult(${i})" class="w-full p-3 text-right flex items-center gap-3 border-b border-slate-100 last:border-b-0 hover:bg-blue-50/60 transition">
+                        <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0"><i class="fa-solid ${r.icon || 'fa-magnifying-glass'} text-xs"></i></div>
+                        <div class="min-w-0 flex-1">
+                            <div class="font-bold text-blue-900 text-[11px] truncate">${escapeHtmlText(r.title)}</div>
+                            <div class="text-[9px] text-slate-500 mt-0.5 truncate">${escapeHtmlText(r.subtitle || '')}</div>
+                        </div>
+                        <i class="fa-solid fa-chevron-left text-[9px] text-slate-300"></i>
+                    </button>
+                `).join('');
+            }
+            resultsBox.classList.remove('hidden');
+        }
+
+        function ensureScreeningItemOpen(type, index) {
+            const isDSM = type === 'dsm';
+            const container = document.getElementById(isDSM ? 'scale-container-phq9' : 'scale-container-gad7');
+            const mainChevron = document.getElementById(isDSM ? 'dsm-chevron' : 'undsm-chevron');
+            if(container) container.classList.remove('hidden');
+            if(mainChevron) mainChevron.style.transform = 'rotate(180deg)';
+            const detail = document.getElementById(`${type}-detail-${index}`);
+            const chevron = document.getElementById(`${type}-item-chevron-${index}`);
+            if(detail) detail.classList.remove('hidden');
+            if(chevron) chevron.style.transform = 'rotate(180deg)';
+            setTimeout(() => {
+                const btn = detail ? detail.previousElementSibling : null;
+                if(btn && btn.scrollIntoView) btn.scrollIntoView({behavior:'smooth', block:'center'});
+            }, 120);
+        }
+
+        function openGlobalSearchResult(index) {
+            const r = globalSearchCache[index];
+            if(!r) return;
+            const input = document.getElementById('global-search-input');
+            if(input) input.value = '';
+            closeGlobalSearchResults();
+
+            if(r.type === 'module') {
+                switchView(r.target);
+                if(r.target === 'recordings-library') loadRecordingsLibrary();
+            } else if(r.type === 'client') {
+                switchView('clients');
+                setTimeout(() => openClientProfile(r.clientId), 100);
+            } else if(r.type === 'approach') {
+                openApproachDetail(r.approachId);
+            } else if(r.type === 'dsm' || r.type === 'undsm') {
+                switchView('psychometrics');
+                setTimeout(() => ensureScreeningItemOpen(r.type, r.screeningIndex), 80);
+            }
+        }
+
+        // ==================== NOTIFICATIONS CENTER (SELF-CONTAINED) ====================
+        function getStoredNotifications() {
+            try {
+                const parsed = JSON.parse(localStorage.getItem('sanad.notifications.v1') || '[]');
+                return Array.isArray(parsed) ? parsed : [];
+            } catch(e) { return []; }
+        }
+
+        function saveStoredNotifications(items) {
+            try { localStorage.setItem('sanad.notifications.v1', JSON.stringify(items || [])); } catch(e) {}
+        }
+
+        function addSanadNotification(notification, tryBrowser=false) {
+            const items = getStoredNotifications();
+            if(items.some(n => n.id === notification.id)) return false;
+            const item = { ...notification, unread:true, createdAt:Date.now() };
+            items.unshift(item);
+            saveStoredNotifications(items.slice(0, 50));
+            updateNotificationBadge();
+            if(tryBrowser) showBrowserNotificationIfAllowed(item);
+            return true;
+        }
+
+        function initializeSanadNotifications() {
+            let createdAny = false;
+            SANAD_RELEASE_NOTIFICATIONS.forEach(n => {
+                if(addSanadNotification(n, false)) createdAny = true;
+            });
+            try { localStorage.setItem('sanad.app.version', SANAD_APP_VERSION); } catch(e) {}
+            updateNotificationBadge();
+            if(createdAny) {
+                const latest = SANAD_RELEASE_NOTIFICATIONS[0];
+                showBrowserNotificationIfAllowed(latest);
+            }
+        }
+
+        function updateNotificationBadge() {
+            const badge = document.getElementById('notification-badge');
+            if(!badge) return;
+            const unread = getStoredNotifications().filter(n => n.unread).length;
+            badge.innerText = unread > 99 ? '99+' : String(unread);
+            badge.classList.toggle('hidden', unread === 0);
+        }
+
+        function renderNotificationsCenter() {
+            const list = document.getElementById('notifications-list');
+            if(!list) return;
+            const items = getStoredNotifications();
+            if(!items.length) {
+                list.innerHTML = `<div class="py-10 text-center text-slate-400"><i class="fa-regular fa-bell-slash text-2xl mb-2 block"></i><div class="text-[11px]">لا توجد إشعارات حاليًا</div></div>`;
+                return;
+            }
+            list.innerHTML = items.map(n => `
+                <button type="button" onclick="markNotificationRead('${String(n.id).replace(/'/g,"\\'")}')" class="w-full text-right p-3 rounded-2xl border ${n.unread ? 'bg-blue-50/70 border-blue-100' : 'bg-white border-slate-200'} hover:border-cyan-300 transition">
+                    <div class="flex items-start gap-2.5">
+                        <div class="w-9 h-9 rounded-xl ${n.unread ? 'bg-blue-900 text-white' : 'bg-slate-100 text-slate-500'} flex items-center justify-center shrink-0"><i class="fa-solid fa-bell text-xs"></i></div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between gap-2">
+                                <h4 class="font-black text-blue-900 text-[11px]">${escapeHtmlText(n.title || 'إشعار')}</h4>
+                                ${n.unread ? '<span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span>' : ''}
+                            </div>
+                            <p class="text-[10px] text-slate-600 leading-5 mt-1">${escapeHtmlText(n.body || '')}</p>
+                            <span class="text-[9px] text-slate-400 mt-1 block">${escapeHtmlText(n.date || '')}</span>
+                        </div>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        function openNotificationsCenter() {
+            renderNotificationsCenter();
+            const panel = document.getElementById('notifications-center');
+            if(panel) panel.classList.remove('hidden');
+        }
+
+        function closeNotificationsCenter() {
+            const panel = document.getElementById('notifications-center');
+            if(panel) panel.classList.add('hidden');
+        }
+
+        function markNotificationRead(id) {
+            const items = getStoredNotifications();
+            const item = items.find(n => String(n.id) === String(id));
+            if(item) item.unread = false;
+            saveStoredNotifications(items);
+            updateNotificationBadge();
+            renderNotificationsCenter();
+        }
+
+        function markAllNotificationsRead() {
+            const items = getStoredNotifications().map(n => ({...n, unread:false}));
+            saveStoredNotifications(items);
+            updateNotificationBadge();
+            renderNotificationsCenter();
+            showToast('تم تعليم جميع الإشعارات كمقروءة');
+        }
+
+        function showBrowserNotificationIfAllowed(n) {
+            if(!('Notification' in window) || Notification.permission !== 'granted') return;
+            try {
+                const key = `sanad.browser.notified.${n.id}`;
+                if(localStorage.getItem(key)) return;
+                new Notification(n.title || 'سَنَد', { body:n.body || '', icon:'icon-robot.png', tag:String(n.id) });
+                localStorage.setItem(key, '1');
+            } catch(e) {}
+        }
+
+        async function requestBrowserNotifications() {
+            if(!('Notification' in window)) {
+                showToast('هذا المتصفح لا يدعم إشعارات المتصفح', true);
+                return;
+            }
+            if(Notification.permission === 'denied') {
+                showToast('إشعارات المتصفح محظورة. فعّلها من إعدادات الموقع في المتصفح.', true);
+                return;
+            }
+            try {
+                const permission = await Notification.requestPermission();
+                if(permission === 'granted') {
+                    showToast('تم تفعيل إشعارات المتصفح');
+                    const latest = getStoredNotifications()[0];
+                    if(latest) {
+                        try { new Notification(latest.title || 'سَنَد', { body:latest.body || '', icon:'icon-robot.png', tag:'sanad-permission-test' }); } catch(e) {}
+                    }
+                } else {
+                    showToast('لم يتم السماح بإشعارات المتصفح', true);
+                }
+            } catch(e) {
+                showToast('تعذر تفعيل إشعارات المتصفح', true);
+            }
+        }
+
+        // ==================== SANAD HYBRID PSYCHOLOGICAL CHAT ====================
+        // يعمل محلياً بقاعدة معرفة نفسية مدمجة، ويستخدم API الخارجي اختيارياً عند توفره.
+        // هذا الجزء معزول عن بقية مكونات التطبيق.
+        const SANAD_LOCAL_KB_VERSION = '2026.09.10-psychology-kb-1';
+
+        const sanadLocalKnowledgeBase = [
+            {
+                id: 'sanad-app',
+                keywords: ['برنامج سند','سند','sanad','ما هو سند','ما هو برنامج سند','المساعد الذكي للاخصائي النفسي'],
+                answer: `سَنَد | SANAD هو مساعد رقمي للأخصائي النفسي يجمع أدوات العمل السريري في مكان واحد. يتضمن المسجل الذكي للجلسات، تحليل وصياغة الحالة، تصميم أوراق العمل، الفحص الأولي DSM وUNDSM، الأنشطة العلاجية، تحضير الجلسات، المواعيد، ملفات العملاء، وفريق العلاج. هدفه مساعدة الأخصائي في التنظيم والتحضير والتوثيق ودعم القرار السريري، وليس استبدال الحكم المهني للأخصائي.`
+            },
+            {
+                id: 'psychotherapy',
+                keywords: ['العلاج النفسي','psychotherapy','ما هو العلاج النفسي'],
+                answer: `العلاج النفسي هو تدخل مهني منظم يستخدم علاقة علاجية وأساليب قائمة على نماذج نفسية لمساعدة العميل على فهم أفكاره ومشاعره وسلوكياته، خفض الضيق، تحسين الأداء، وتنمية مهارات التكيف. تختلف التقنيات حسب المدرسة العلاجية والمشكلة والأهداف والسياق السريري.`
+            },
+            {
+                id: 'case-formulation',
+                keywords: ['صياغة الحالة','تحليل الحالة','case formulation','5ps','5 ps'],
+                answer: `صياغة الحالة Case Formulation هي تفسير سريري منظم يربط بين المشكلة الحالية والعوامل التي أسهمت في ظهورها واستمرارها وعوامل الحماية. من النماذج الشائعة 5Ps: المشكلة الحالية Presenting، العوامل المهيئة Predisposing، المرسبة Precipitating، المستديمة Perpetuating، والحامية Protective. الصياغة ليست مجرد تشخيص؛ بل خريطة توجه أهداف العلاج والتدخل والمتابعة.`
+            },
+            {
+                id: 'treatment-plan',
+                keywords: ['الخطة العلاجية','خطة علاج','treatment plan','اهداف العلاج','أهداف العلاج'],
+                answer: `الخطة العلاجية الجيدة تربط بين صياغة الحالة والأهداف والتدخلات والقياس. عملياً: 1) تحديد المشكلات ذات الأولوية، 2) صياغة أهداف قابلة للملاحظة والقياس، 3) اختيار تدخلات مناسبة للدليل والحالة، 4) تحديد واجبات أو ممارسات بين الجلسات عند الحاجة، 5) استخدام مقاييس أو مؤشرات تقدم، 6) مراجعة الخطة دوريًا وتعديلها.`
+            },
+            {
+                id: 'abc',
+                keywords: ['تحليل abc','نموذج abc','abc','التحليل الوظيفي','functional analysis'],
+                answer: `نموذج ABC في التحليل الوظيفي يدرس: A السوابق Antecedents: ما الذي حدث قبل السلوك؟ B السلوك Behavior: ما السلوك المحدد القابل للملاحظة؟ C النتائج Consequences: ماذا حدث بعده وقد يزيد أو يخفض احتمال تكراره؟ يستخدم النموذج لبناء فرضية عن وظيفة السلوك ثم اختيار تدخل مناسب بدل التعامل مع السلوك بصورة عامة.`
+            },
+            {
+                id: 'cognitive-restructuring',
+                keywords: ['اعادة البناء المعرفي','إعادة البناء المعرفي','cognitive restructuring','تحدي الافكار','تحدي الأفكار'],
+                answer: `إعادة البناء المعرفي تقنية في CBT تساعد العميل على التعرف إلى الأفكار التلقائية، فحص الأدلة المؤيدة والمعارضة، اكتشاف التشوهات المعرفية، وبناء تفسير أكثر توازنًا وفائدة. الهدف ليس التفكير الإيجابي القسري، بل زيادة الدقة والمرونة المعرفية.`
+            },
+            {
+                id: 'behavioral-activation',
+                keywords: ['التنشيط السلوكي','behavioral activation','تفعيل سلوكي'],
+                answer: `التنشيط السلوكي Behavioral Activation تدخل يركز على كسر دائرة الانسحاب والخمول عبر زيادة الأنشطة المرتبطة بالقيم أو الإتقان أو المتعة بصورة تدريجية. يشمل عادة مراقبة النشاط والمزاج، تحديد أنماط التجنب، جدولة أنشطة صغيرة قابلة للتنفيذ، ثم مراجعة أثرها.`
+            },
+            {
+                id: 'exposure',
+                keywords: ['التعرض','exposure','erp','منع الاستجابة','التعرض ومنع الاستجابة'],
+                answer: `التعرض Exposure هو مواجهة تدريجية ومنظمة للمثيرات أو المواقف أو الذكريات المخيفة بدل تجنبها، بهدف حدوث تعلم جديد وانخفاض سيطرة الخوف. وفي الوسواس القهري يستخدم التعرض ومنع الاستجابة ERP: التعرض للمثير الوسواسي مع الامتناع عن الطقس القهري. يحتاج إلى تدرج، موافقة، وتقييم ملاءمة الحالة.`
+            },
+            {
+                id: 'mindfulness',
+                keywords: ['اليقظة الذهنية','mindfulness','الوعي اللحظي'],
+                answer: `اليقظة الذهنية Mindfulness هي توجيه الانتباه عمدًا إلى الخبرة الحالية بقدر أكبر من الانفتاح وعدم الحكم. يمكن تدريبها عبر ملاحظة التنفس، فحص الجسد، ملاحظة الأفكار كمحتوى ذهني، أو الوعي بالحواس. تستخدم كمهارة تنظيم وانتباه وليست محاولة لإيقاف الأفكار بالقوة.`
+            },
+            {
+                id: 'perma',
+                keywords: ['perma','بيرما','نموذج بيرما'],
+                answer: `PERMA نموذج للرفاه النفسي يتضمن خمسة عناصر: P المشاعر الإيجابية Positive Emotion، E الاندماج Engagement، R العلاقات الإيجابية Relationships، M المعنى Meaning، A الإنجاز Accomplishment. يمكن استخدامه كخريطة لتقييم جوانب الرفاه وبناء تدخلات متوازنة بدل التركيز على خفض الأعراض وحده.`
+            },
+            {
+                id: 'strengths',
+                keywords: ['نقاط القوة','via','قوى الشخصية','character strengths'],
+                answer: `نقاط القوة الشخصية Character Strengths هي خصائص إيجابية قابلة للتعبير والتطوير مثل الفضول والمثابرة واللطف والامتنان. في العمل القائم على نقاط القوة لا يكفي تحديد القوة؛ بل تُدرس طريقة استخدامها، الإفراط أو التفريط فيها، وكيف يمكن توظيفها لتحقيق هدف علاجي أو نمائي محدد.`
+            },
+            {
+                id: 'resilience',
+                keywords: ['المرونة النفسية','resilience','الصمود النفسي'],
+                answer: `المرونة النفسية Resilience هي القدرة الديناميكية على التكيف والتعافي أو الاستمرار في الأداء أمام الشدائد، وليست سمة ثابتة أو غيابًا للضيق. تتأثر بموارد الفرد وعلاقاته وبيئته ومعنى الخبرة ومهارات التنظيم وحل المشكلات.`
+            },
+            {
+                id: 'hope',
+                keywords: ['الامل','الأمل','hope theory','نظرية الامل'],
+                answer: `في نظرية الأمل يُنظر إلى الأمل بوصفه مزيجًا من Agency: الدافعية والإحساس بالقدرة على التحرك نحو الهدف، وPathways: القدرة على توليد مسارات متعددة للوصول إليه. التدخلات تركز لذلك على أهداف واضحة، خطوات صغيرة، بدائل عند العوائق، وتعزيز الإحساس بالفاعلية.`
+            },
+            {
+                id: 'optimism',
+                keywords: ['التفاؤل','optimism','التوجه نحو الحياة'],
+                answer: `التفاؤل هو توقع عام نسبيًا لنتائج إيجابية في المستقبل مع الاستمرار في السعي نحو الأهداف. سريريًا من المهم تمييز التفاؤل الواقعي عن إنكار المخاطر؛ فالهدف هو بناء توقعات مرنة مرتبطة بالفعل والموارد المتاحة.`
+            },
+            {
+                id: 'self-compassion',
+                keywords: ['الشفقة بالذات','التعاطف مع الذات','self compassion','self-compassion'],
+                answer: `الشفقة بالذات Self-Compassion تعني الاستجابة لمعاناة الذات بلطف وفهم مع إدراك أن الصعوبة جزء من الخبرة الإنسانية، والمحافظة على وعي متوازن بالمشاعر بدل الاندماج الكامل فيها. يمكن توظيفها للحد من النقد الذاتي القاسي ودعم التنظيم الانفعالي.`
+            },
+            {
+                id: 'positive-relations',
+                keywords: ['العلاقات الايجابية','العلاقات الإيجابية','positive relationships','التواصل الايجابي','التواصل الإيجابي'],
+                answer: `العلاقات الإيجابية تتصف بالدعم والثقة والاحترام والتبادلية والشعور بالأمان والانتماء. علاجيًا يمكن تنميتها عبر الاستماع النشط، الاستجابة البناءة للأخبار الإيجابية، التعبير الواضح عن الاحتياجات، الحدود الصحية، إصلاح الخلافات، وزيادة السلوكيات الداعمة المتبادلة.`
+            },
+            {
+                id: 'pfa',
+                keywords: ['الاسعافات النفسية الاولية','الإسعافات النفسية الأولية','psychological first aid','pfa'],
+                answer: `الإسعافات النفسية الأولية PFA هي دعم إنساني عملي بعد الأزمات يركز على الأمان والهدوء والاحتياجات الأساسية والربط بمصادر الدعم والمعلومات. لا تقوم على إجبار الناجي على سرد تفاصيل الصدمة، بل على الاستماع عند الرغبة، احترام الخصوصية، وتسهيل الوصول إلى المساعدة المناسبة.`
+            },
+            {
+                id: 'risk-assessment',
+                keywords: ['تقييم الخطورة','تقييم الخطر','خطر الانتحار','suicide risk','risk assessment'],
+                answer: `تقييم الخطورة السريري يجمع بين السؤال المباشر عن الأفكار والنية والخطة والوسائل والسلوك السابق، وعوامل الخطر والحماية، والحالة العقلية والسياق والدعم المتاح. لا يُختزل في درجة مقياس واحدة. عند وجود خطر وشيك تُقدَّم السلامة والإجراءات الطارئة المحلية على بقية العمل العلاجي.`
+            },
+            {
+                id: 'therapeutic-alliance',
+                keywords: ['العلاقة العلاجية','التحالف العلاجي','therapeutic alliance'],
+                answer: `التحالف العلاجي Therapeutic Alliance يشمل اتفاق الأخصائي والعميل على أهداف العلاج، الاتفاق على المهام والأساليب، وجود رابطة مهنية تتسم بالثقة والأمان. من المفيد مراجعة التحالف دوريًا وطلب تغذية راجعة وتصحيح أي انقطاع أو سوء فهم.`
+            },
+            {
+                id: 'sleep-hygiene',
+                keywords: ['نظافة النوم','sleep hygiene','الارق','الأرق'],
+                answer: `نظافة النوم تشمل عادات داعمة للنوم مثل انتظام وقت الاستيقاظ، تقليل المنبهات مساءً، تهيئة بيئة نوم مناسبة، وتقليل الأنشطة المنبهة في السرير. في الأرق المزمن تكون CBT-I أوسع من نظافة النوم وحدها وتشمل ضبط المثيرات وتقييد/ضغط وقت النوم والعمل المعرفي وفق تقييم الحالة.`
+            },
+            {
+                id: 'addiction',
+                keywords: ['الادمان','الإدمان','addiction','اضطراب استخدام المواد','الادمان السلوكي','الإدمان السلوكي'],
+                answer: `في العمل مع الإدمان تُقيَّم شدة النمط، فقدان السيطرة، الرغبة الملحة، العواقب الوظيفية، المحفزات، التعزيزات، الاضطرابات المصاحبة، والدعم الاجتماعي. من التدخلات المستخدمة حسب الحالة: المقابلة التحفيزية، CBT، إدارة المثيرات، مهارات التعامل مع الرغبة، الوقاية من الانتكاس، وبناء بدائل ومكافآت طبيعية.`
+            }
+        ];
+
+        const sanadApproachAliases = {
+            cbt: ['cbt','العلاج المعرفي السلوكي','معرفي سلوكي'],
+            pcbt: ['p-cbt','pcbt','العلاج المعرفي السلوكي الايجابي','العلاج المعرفي السلوكي الإيجابي'],
+            dbt: ['dbt','العلاج السلوكي الجدلي','السلوكي الجدلي'],
+            act: ['act','علاج القبول والالتزام','القبول والالتزام'],
+            ppt: ['ppt','العلاج النفسي الايجابي','العلاج النفسي الإيجابي','positive psychotherapy'],
+            sfbt: ['sfbt','العلاج المرتكز على الحل','العلاج المتمركز حول الحل'],
+            tfcbt: ['tf-cbt','tfcbt','العلاج المعرفي السلوكي المركز على الصدمة','العلاج المعرفي السلوكي المتمركز حول الصدمة'],
+            play: ['play therapy','العلاج باللعب'],
+            art: ['art therapy','العلاج بالفن'],
+            family: ['family therapy','العلاج الاسري','العلاج الأسري'],
+            couples: ['couples therapy','العلاج الزواجي','علاج الازواج','علاج الأزواج'],
+            mi: ['mi','motivational interviewing','المقابلة التحفيزية']
+        };
+
+        function normalizeSanadArabic(value) {
+            return String(value || '')
+                .toLowerCase()
+                .replace(/[\u064B-\u065F\u0670]/g, '')
+                .replace(/ـ/g, '')
+                .replace(/[أإآ]/g, 'ا')
+                .replace(/ى/g, 'ي')
+                .replace(/ؤ/g, 'و')
+                .replace(/ئ/g, 'ي')
+                .replace(/ة/g, 'ه')
+                .replace(/[^a-z0-9\u0600-\u06FF\s-]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function sanadTokenScore(query, terms) {
+            const q = normalizeSanadArabic(query);
+            let score = 0;
+            for(const term of terms || []) {
+                const t = normalizeSanadArabic(term);
+                if(!t) continue;
+                if(q === t) score += 12;
+                else if(q.includes(t)) score += Math.max(5, Math.min(10, t.length / 3));
+                const words = t.split(' ').filter(w => w.length > 2);
+                words.forEach(w => { if(q.includes(w)) score += 1; });
+            }
+            return score;
+        }
+
+        function getSanadApproachAnswer(query) {
+            if(typeof therapeuticApproachesData === 'undefined' || !Array.isArray(therapeuticApproachesData)) return null;
+            const q = normalizeSanadArabic(query);
+            let best = null;
+            let bestScore = 0;
+            therapeuticApproachesData.forEach(app => {
+                const aliases = [app.id, app.title, ...(sanadApproachAliases[app.id] || [])];
+                const score = sanadTokenScore(q, aliases);
+                if(score > bestScore) { bestScore = score; best = app; }
+            });
+            if(!best || bestScore < 5) return null;
+            const inSession = (best.inSession || []).slice(0,5).join('\n');
+            const homework = (best.homework || []).slice(0,5).join('\n');
+            return {
+                confidence: bestScore,
+                answer: `${best.title}\n\n${best.tagline || ''}\n\nأمثلة لتدخلات داخل الجلسة:\n${inSession}\n\nأمثلة لمهام بين الجلسات:\n${homework}`
+            };
+        }
+
+        function getSanadDSMAnswer(query) {
+            if(typeof dsmDisorders === 'undefined' || !Array.isArray(dsmDisorders)) return null;
+            const q = normalizeSanadArabic(query);
+            let best = null;
+            let bestScore = 0;
+            dsmDisorders.forEach(disorder => {
+                const shortName = String(disorder.name || '').replace(/^اضطراب\s+/,'');
+                const terms = [disorder.name, shortName];
+                const latin = (disorder.name.match(/[A-Z][A-Z0-9-]+/g) || []);
+                terms.push(...latin);
+                const score = sanadTokenScore(q, terms);
+                if(score > bestScore) { bestScore = score; best = disorder; }
+            });
+            if(!best || bestScore < 5) return null;
+            const symptoms = (best.symptoms || []).map((x,i) => `${i+1}. ${x}`).join('\n');
+            return {
+                confidence: bestScore,
+                answer: `${best.name}\n\nملخص سريري للسمات/المعايير الموجودة في قاعدة سند:\n${symptoms}\n\nملاحظة: يستخدم هذا المحتوى للفحص والتثقيف ودعم الصياغة، ولا يكفي وحده لإصدار تشخيص دون تقييم سريري شامل وتشخيص تفريقي.`
+            };
+        }
+
+        function getSanadUNDSMAnswer(query) {
+            if(typeof undsmScales === 'undefined' || !Array.isArray(undsmScales)) return null;
+            const q = normalizeSanadArabic(query);
+            let best = null;
+            let bestScore = 0;
+            undsmScales.forEach(scale => {
+                const terms = [scale.name, String(scale.name || '').replace(/^مقياس\s+/,'')];
+                const latin = (scale.name.match(/[A-Z][A-Z0-9-]+/g) || []);
+                terms.push(...latin);
+                const score = sanadTokenScore(q, terms);
+                if(score > bestScore) { bestScore = score; best = scale; }
+            });
+            if(!best || bestScore < 5) return null;
+            const items = (best.items || []).map((x,i) => `${i+1}. ${x}`).join('\n');
+            return {
+                confidence: bestScore,
+                answer: `${best.name}\n\nالأبعاد الموجودة في قاعدة سند:\n${items}\n\nيمكن استخدام هذه الأبعاد لتوجيه التقييم الإيجابي ومتابعة جوانب الرفاه، مع الرجوع إلى النسخة المقننة وتعليمات التصحيح الخاصة بالمقياس المستخدم.`
+            };
+        }
+
+        function getSanadLocalKnowledgeAnswer(query) {
+            const q = normalizeSanadArabic(query);
+            if(!q) return null;
+
+            // أسئلة التشخيص الذاتي لا تتحول إلى تشخيص آلي.
+            if(/(شخصني|شخصني|هل لدي|هل اعاني|هل انا مصاب|هل هذا يعني اني)/.test(q)) {
+                return {
+                    confidence: 20,
+                    answer: `لا يمكن إصدار تشخيص نفسي موثوق من سؤال واحد أو من دردشة قصيرة. يمكنني مساعدتك في تنظيم الأعراض، المدة، الشدة، الأثر الوظيفي، عوامل الاستبعاد، والتشخيصات التفريقية، ثم مقارنتها بمعايير الفحص المناسبة.`
+                };
+            }
+
+            const candidates = [];
+            const approach = getSanadApproachAnswer(query); if(approach) candidates.push(approach);
+            const dsm = getSanadDSMAnswer(query); if(dsm) candidates.push(dsm);
+            const undsm = getSanadUNDSMAnswer(query); if(undsm) candidates.push(undsm);
+
+            sanadLocalKnowledgeBase.forEach(entry => {
+                const score = sanadTokenScore(q, entry.keywords);
+                if(score >= 4) candidates.push({ confidence: score, answer: entry.answer });
+            });
+
+            if(candidates.length) {
+                candidates.sort((a,b) => b.confidence - a.confidence);
+                return candidates[0];
+            }
+
+            return {
+                confidence: 1,
+                answer: `لا أملك في قاعدة المعرفة المحلية إجابة دقيقة بما يكفي عن هذا السؤال بعد. يمكنك سؤالي عن مدارس العلاج النفسي مثل CBT وDBT وACT وPPT، تحليل الحالة 5Ps، التحليل الوظيفي ABC، تقنيات مثل التعرض وإعادة البناء المعرفي والتنشيط السلوكي، المرونة ونقاط القوة وPERMA، أو اضطرابات ومقاييس الفحص الموجودة داخل سند.\n\nإذا تم ربط خدمة الذكاء الاصطناعي من إعدادات سند، يمكن للأسئلة الأوسع أن تُرسل إليها تلقائيًا.`
+            };
+        }
+
+        // ==================== SANAD CLIENT-AWARE CONTEXT (LOCAL ONLY) ====================
+        function sanadNormalizeText(value) {
+            return String(value || '')
+                .toLowerCase()
+                .replace(/[أإآ]/g, 'ا')
+                .replace(/ى/g, 'ي')
+                .replace(/ة/g, 'ه')
+                .replace(/[ًٌٍَُِّْـ]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function sanadIDBGet(storeName, key) {
+            return new Promise((resolve) => {
+                try {
+                    const tx = db.transaction([storeName], 'readonly');
+                    const req = tx.objectStore(storeName).get(key);
+                    req.onsuccess = () => resolve(req.result || null);
+                    req.onerror = () => resolve(null);
+                } catch(e) { resolve(null); }
+            });
+        }
+
+        function sanadIDBGetAll(storeName) {
+            return new Promise((resolve) => {
+                try {
+                    const tx = db.transaction([storeName], 'readonly');
+                    const req = tx.objectStore(storeName).getAll();
+                    req.onsuccess = () => resolve(req.result || []);
+                    req.onerror = () => resolve([]);
+                } catch(e) { resolve([]); }
+            });
+        }
+
+        function sanadItemBelongsToClient(item, client) {
+            if(!item || !client) return false;
+            if(item.clientId !== undefined && item.clientId !== null && Number(item.clientId) === Number(client.id)) return true;
+            const itemName = sanadNormalizeText(item.clientName);
+            const clientName = sanadNormalizeText(client.name);
+            return !!itemName && !!clientName && itemName === clientName;
+        }
+
+        async function collectSanadClientContext(clientId) {
+            if(!clientId || !db) return null;
+            if(sanadClientContextCache && Number(sanadClientContextCacheId) === Number(clientId)) return sanadClientContextCache;
+
+            const [client, formulations, recordings, appointments, plans] = await Promise.all([
+                sanadIDBGet('Clients', Number(clientId)),
+                sanadIDBGetAll('CaseFormulations'),
+                sanadIDBGetAll('Recordings'),
+                sanadIDBGetAll('Appointments'),
+                sanadIDBGetAll('SessionPlans')
+            ]);
+            if(!client) return null;
+
+            const byNewest = (a,b) => Number(b.updatedAt || b.createdAt || b.timestamp || 0) - Number(a.updatedAt || a.createdAt || a.timestamp || 0);
+            const clientFormulations = formulations.filter(x => sanadItemBelongsToClient(x, client)).sort(byNewest);
+            const clientRecordings = recordings.filter(x => sanadItemBelongsToClient(x, client)).sort(byNewest);
+            const clientAppointments = appointments.filter(x => sanadItemBelongsToClient(x, client)).sort((a,b) => {
+                const da = new Date(`${a.date || '1970-01-01'}T${a.time || '00:00'}`).getTime();
+                const dbv = new Date(`${b.date || '1970-01-01'}T${b.time || '00:00'}`).getTime();
+                return da - dbv;
+            });
+            const clientPlans = plans.filter(x => sanadItemBelongsToClient(x, client)).sort(byNewest);
+
+            const now = Date.now();
+            const upcoming = clientAppointments.filter(a => {
+                if(['مكتمل','ملغي'].includes(a.status)) return false;
+                const ts = new Date(`${a.date || ''}T${a.time || '00:00'}`).getTime();
+                return Number.isFinite(ts) && ts >= now - 60*60*1000;
+            });
+
+            const context = {
+                client,
+                formulations: clientFormulations,
+                recordings: clientRecordings,
+                appointments: clientAppointments,
+                upcomingAppointments: upcoming,
+                plans: clientPlans,
+                latestFormulation: clientFormulations[0] || null,
+                latestRecording: clientRecordings[0] || null,
+                latestPlan: clientPlans[0] || null,
+                nextAppointment: upcoming[0] || null,
+                notes: Array.isArray(client.clientNotes) ? client.clientNotes.slice(-5).reverse() : []
+            };
+            sanadClientContextCache = context;
+            sanadClientContextCacheId = Number(clientId);
+            return context;
+        }
+
+        function invalidateSanadClientContext(clientId = null) {
+            if(clientId === null || Number(clientId) === Number(sanadClientContextCacheId)) {
+                sanadClientContextCache = null;
+                sanadClientContextCacheId = null;
+            }
+        }
+
+        function sanadTrimClinicalText(value, max = 700) {
+            const s = String(value || '').trim();
+            if(!s) return '';
+            return s.length > max ? s.slice(0, max).trim() + '…' : s;
+        }
+
+        function sanadDescribeLatestRecording(r) {
+            if(!r) return 'لا توجد جلسة مسجلة مرتبطة بهذا العميل حتى الآن.';
+            const useful = sanadTrimClinicalText(r.summary || r.transcript, 700);
+            return `${r.title || 'جلسة مسجلة'}${r.date ? ` — ${r.date}` : ''}${r.durationFormatted ? ` — ${r.durationFormatted}` : ''}${useful ? `\n${useful}` : ''}`;
+        }
+
+        function sanadDescribeNextAppointment(a) {
+            if(!a) return 'لا يوجد موعد قادم مسجل.';
+            return `${a.title || 'جلسة'} — ${a.date || '-'} الساعة ${a.time || '-'} — ${a.sessionType || 'فردية'} — ${a.status || 'مجدول'}`;
+        }
+
+        function sanadBuildClientSummary(ctx) {
+            const c = ctx.client || {};
+            const f = ctx.latestFormulation || {};
+            const notes = ctx.notes || [];
+            const parts = [
+                `ملخص ملف العميل الحالي — مبني فقط على البيانات المحفوظة في سَنَد:`,
+                `• سبب المراجعة: ${c.reason || 'غير مسجل'}`,
+                `• الملاحظات الأولية: ${sanadTrimClinicalText(c.initialNotes, 450) || 'غير مسجلة'}`
+            ];
+            if(f.presentingProblem || f.currentSymptoms) {
+                parts.push(`• المشكلة/الأعراض الحالية: ${sanadTrimClinicalText(f.presentingProblem || f.currentSymptoms, 650)}`);
+            }
+            if(f.diagnosticHypotheses) parts.push(`• الفرضيات التشخيصية المسجلة: ${sanadTrimClinicalText(f.diagnosticHypotheses, 500)}`);
+            if(f.strengths || f.protective) parts.push(`• نقاط القوة/العوامل الواقية: ${sanadTrimClinicalText(f.strengths || f.protective, 500)}`);
+            if(f.goals) parts.push(`• الأهداف الحالية: ${sanadTrimClinicalText(f.goals, 550)}`);
+            if(notes.length) parts.push(`• أحدث ملاحظة: ${sanadTrimClinicalText(notes[0].text, 450)}`);
+            parts.push(`• عدد الجلسات المسجلة: ${ctx.recordings.length}`);
+            parts.push(`• الموعد القادم: ${sanadDescribeNextAppointment(ctx.nextAppointment)}`);
+            return parts.join('\n');
+        }
+
+        function sanadBuildNextSessionDraft(ctx) {
+            const c = ctx.client || {};
+            const f = ctx.latestFormulation || {};
+            const p = ctx.latestPlan || {};
+            const r = ctx.latestRecording || null;
+            const primaryGoal = sanadTrimClinicalText(f.goals || p.mainGoal || c.reason, 450) || 'يُحدد الهدف مع العميل في بداية الجلسة';
+            const focus = sanadTrimClinicalText(f.presentingProblem || p.mainTopic || c.reason, 400) || 'مراجعة المشكلة الحالية والتقدم منذ الجلسة السابقة';
+            const recent = r ? sanadTrimClinicalText(r.summary || r.transcript, 500) : '';
+            const approach = p.approach || 'المدرسة العلاجية المعتمدة لدى الأخصائي';
+            return [
+                `مسودة تحضير للجلسة القادمة — تحتاج مراجعة الأخصائي قبل اعتمادها:`,
+                `• محور الجلسة: ${focus}`,
+                `• الهدف السريري الحالي: ${primaryGoal}`,
+                `• المنهج العلاجي المسجل: ${approach}`,
+                recent ? `• نقطة الانطلاق من آخر جلسة: ${recent}` : `• لا يوجد تفريغ/ملخص سابق كافٍ؛ ابدأ بمراجعة ما حدث منذ آخر لقاء.`,
+                ``,
+                `أجندة مقترحة (50 دقيقة):`,
+                `1. فحص الحالة الحالية والمخاطر والتغيرات المهمة — 5 دقائق.`,
+                `2. مراجعة ما تم منذ الجلسة السابقة والواجب/الممارسة — 10 دقائق.`,
+                `3. تحديد هدف الجلسة بصورة مشتركة — 5 دقائق.`,
+                `4. التدخل العلاجي الرئيس المرتبط بالهدف — 20 دقيقة.`,
+                `5. تدريب عملي أو تطبيق داخل الجلسة — 5 دقائق.`,
+                `6. تلخيص، تغذية راجعة، واتفاق على خطوة بين الجلسات — 5 دقائق.`,
+                ``,
+                `أسئلة مساعدة: ما أهم تغير منذ اللقاء السابق؟ ما الموقف الأصعب؟ ما الذي ساعد ولو قليلًا؟ ما الخطوة الصغيرة الأكثر واقعية قبل الجلسة التالية؟`,
+                f.risk ? `\nتنبيه من ملف الحالة: يوجد نص في خانة تقييم المخاطر ويجب مراجعته سريريًا: ${sanadTrimClinicalText(f.risk, 350)}` : ''
+            ].filter(Boolean).join('\n');
+        }
+
+        function getSanadClientContextAnswer(query, ctx) {
+            if(!ctx || !ctx.client) return null;
+            const q = sanadNormalizeText(query);
+            const has = (...terms) => terms.some(t => q.includes(sanadNormalizeText(t)));
+            const explicitlyClient = has('هذا العميل','هذه الحالة','الحالة الحالية','العميل الحالي','ملف العميل','عنه','عنها');
+
+            if(has('لخص الحالة','لخص لي الحالة','ملخص الحالة','لخص العميل','ملخص العميل') || (explicitlyClient && has('لخص','ملخص'))) {
+                return { confidence: 20, answer: sanadBuildClientSummary(ctx), source: 'ملف العميل المحلي' };
+            }
+            if(has('حضر الجلسة','حضّر الجلسة','تحضير الجلسة','الجلسة القادمة','ماذا اقترح للجلسة','ماذا أقترح للجلسة','خطة الجلسة القادمة')) {
+                return { confidence: 20, answer: sanadBuildNextSessionDraft(ctx), source: 'ملف العميل المحلي' };
+            }
+            if(has('الموعد القادم','موعده القادم','موعدها القادم','متى الموعد','متى جلسته','متى جلستها')) {
+                return { confidence: 20, answer: `الموعد القادم المسجل لهذا العميل:\n${sanadDescribeNextAppointment(ctx.nextAppointment)}`, source: 'مواعيد العميل' };
+            }
+            if(has('اخر جلسة','آخر جلسة','الجلسة السابقة','ماذا حدث في اخر جلسة','ماذا حدث في آخر جلسة')) {
+                return { confidence: 20, answer: `آخر جلسة مرتبطة بالعميل:\n${sanadDescribeLatestRecording(ctx.latestRecording)}`, source: 'جلسات العميل' };
+            }
+            if(has('الاهداف','الأهداف','هدف العلاج','اهداف العلاج','أهداف العلاج')) {
+                const f = ctx.latestFormulation || {};
+                const p = ctx.latestPlan || {};
+                const goals = sanadTrimClinicalText(f.goals || p.mainGoal, 900);
+                return { confidence: 18, answer: goals ? `الأهداف المسجلة حاليًا:\n${goals}` : 'لا توجد أهداف علاجية مفصلة محفوظة لهذا العميل حتى الآن. يمكن تحديدها في تحليل الحالة أو تحضير الجلسة.', source: 'ملف العميل المحلي' };
+            }
+            if(has('الخطر','المخاطر','خطورة','انتحار','ايذاء النفس','إيذاء النفس')) {
+                const risk = sanadTrimClinicalText(ctx.latestFormulation?.risk, 1000);
+                return { confidence: 18, answer: risk ? `المعلومات المسجلة في خانة تقييم المخاطر:\n${risk}\n\nهذه ليست إعادة تقييم آلية؛ يجب مراجعة السلامة سريريًا في الوقت الحالي.` : 'لا توجد معلومات مخاطر محفوظة في أحدث صياغة حالة. غياب التسجيل لا يعني غياب الخطر؛ يلزم التقييم السريري المباشر عند وجود مؤشرات.', source: 'صياغة الحالة' };
+            }
+            if(has('التقدم','تطور الحالة','هل تحسن','هل تحسنت','التحسن')) {
+                const sessionCount = ctx.recordings.length;
+                const note = ctx.notes[0]?.text ? sanadTrimClinicalText(ctx.notes[0].text, 500) : '';
+                const rec = ctx.latestRecording ? sanadTrimClinicalText(ctx.latestRecording.summary || ctx.latestRecording.transcript, 500) : '';
+                return { confidence: 16, answer: `لا يمكن استنتاج مقدار التحسن بدقة من عدد الجلسات وحده.\n• الجلسات المسجلة: ${sessionCount}\n${rec ? `• أحدث محتوى جلسة: ${rec}\n` : ''}${note ? `• أحدث ملاحظة ملف: ${note}\n` : ''}للحكم على التقدم بصورة أفضل، قارن القياسات المتكررة وخط الأساس والأداء اليومي والأهداف المتفق عليها.`, source: 'ملف العميل المحلي' };
+            }
+            if(explicitlyClient) {
+                return { confidence: 12, answer: `${sanadBuildClientSummary(ctx)}\n\nيمكنك أن تطلب مني: «لخص الحالة»، «ما الموعد القادم؟»، «ماذا حدث في آخر جلسة؟»، «ما الأهداف؟»، أو «حضّر الجلسة القادمة».`, source: 'ملف العميل المحلي' };
+            }
+            return null;
+        }
+
+        function getSanadAIEndpoint() {
+            return (localStorage.getItem('sanad_ai_endpoint') || SANAD_AI_ENDPOINT_DEFAULT).trim();
+        }
+
+        function sanadCanUseRemoteAI() {
+            // عند فتح HTML مباشرة من القرص لا يوجد مسار /api، لذلك لا نحاول fetch أصلاً.
+            if(location.protocol === 'file:') return false;
+            const endpoint = getSanadAIEndpoint();
+            if(!endpoint) return false;
+            return true;
+        }
+
+        async function initializeSanadChat() {
+            const historyBox = document.getElementById('ai-chat-history');
+            if(!historyBox) return;
+            if(historyBox.dataset.initialized !== '1') {
+                historyBox.dataset.initialized = '1';
+                const modeText = sanadCanUseRemoteAI()
+                    ? 'لدي قاعدة معرفة نفسية مدمجة، ويمكنني كذلك استخدام خدمة الذكاء الاصطناعي المتصلة بالتطبيق عند الحاجة.'
+                    : 'أعمل الآن بقاعدة معرفة نفسية مدمجة داخل سند، لذلك أستطيع الإجابة عن الأسئلة النفسية الأساسية حتى عند فتح التطبيق من جهازك مباشرة.';
+                appendSanadChatBubble('assistant', `مرحباً، أنا سَنَد. ${modeText}`);
+            }
+
+            // إذا فُتحت دردشة سند أثناء وجود ملف عميل نشط، يقرأ سند سياق الملف محلياً.
+            if(currentActiveProfileClientId) {
+                const ctx = await collectSanadClientContext(currentActiveProfileClientId);
+                if(ctx && Number(sanadChatAnnouncedClientId) !== Number(currentActiveProfileClientId)) {
+                    sanadChatAnnouncedClientId = Number(currentActiveProfileClientId);
+                    appendSanadChatBubble('assistant', `تم ربط هذه المحادثة محلياً بملف العميل: ${ctx.client.name || 'العميل الحالي'}. يمكنك أن تسألني: لخص الحالة، ما آخر جلسة؟ ما الموعد القادم؟ ما الأهداف؟ أو حضّر الجلسة القادمة.`);
+                    setSanadChatStatus('سياق العميل الحالي مُفعّل محلياً ولا يُرسل تلقائياً للخدمة الخارجية.');
+                }
+            } else {
+                sanadChatAnnouncedClientId = null;
+            }
+        }
+
+        function appendSanadChatBubble(role, text, pending = false) {
+            const historyBox = document.getElementById('ai-chat-history');
+            if(!historyBox) return null;
+            const row = document.createElement('div');
+            row.className = `flex ${role === 'user' ? 'justify-start' : 'justify-end'}`;
+            const bubble = document.createElement('div');
+            bubble.className = role === 'user'
+                ? 'max-w-[85%] bg-blue-900 text-white rounded-2xl rounded-tr-sm px-3 py-2.5 leading-6 shadow-2xs whitespace-pre-wrap'
+                : 'max-w-[85%] bg-white text-slate-800 border border-slate-200 rounded-2xl rounded-tl-sm px-3 py-2.5 leading-6 shadow-2xs whitespace-pre-wrap';
+            bubble.textContent = text;
+            if(pending) {
+                bubble.dataset.pending = '1';
+                bubble.classList.add('text-slate-500');
+            }
+            row.appendChild(bubble);
+            historyBox.appendChild(row);
+            historyBox.scrollTop = historyBox.scrollHeight;
+            return bubble;
+        }
+
+        function setSanadChatStatus(message = '', isError = false) {
+            const el = document.getElementById('ai-chat-status');
+            if(!el) return;
+            if(!message) {
+                el.classList.add('hidden');
+                el.textContent = '';
+                return;
+            }
+            el.textContent = message;
+            el.className = `text-[10px] rounded-xl px-3 py-2 border ${isError ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-white border-slate-200 text-slate-500'}`;
+        }
+
+        function handleSanadChatKeydown(event) {
+            if(event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendSanadChatMessage();
+            }
+        }
+
+        function finalizeSanadChatAnswer(pendingBubble, answer, sourceLabel) {
+            if(pendingBubble) {
+                pendingBubble.textContent = answer;
+                pendingBubble.classList.remove('text-slate-500');
+                pendingBubble.dataset.pending = '0';
+            } else {
+                appendSanadChatBubble('assistant', answer);
+            }
+            sanadChatMessages.push({ role: 'assistant', content: answer });
+            if(sanadChatMessages.length > 18) sanadChatMessages = sanadChatMessages.slice(-18);
+            setSanadChatStatus(sourceLabel || '');
+            if(sourceLabel) setTimeout(() => setSanadChatStatus(''), 2600);
+        }
+
+        async function sendSanadChatMessage() {
+            if(sanadChatBusy) return;
+            const input = document.getElementById('ai-chat-input');
+            const sendBtn = document.getElementById('ai-chat-send-btn');
+            if(!input) return;
+            const text = input.value.trim();
+            if(!text) return;
+
+            sanadChatBusy = true;
+            if(sendBtn) sendBtn.disabled = true;
+            input.value = '';
+            appendSanadChatBubble('user', text);
+            sanadChatMessages.push({ role: 'user', content: text });
+            if(sanadChatMessages.length > 18) sanadChatMessages = sanadChatMessages.slice(-18);
+            const pendingBubble = appendSanadChatBubble('assistant', 'جاري البحث في قاعدة سند...', true);
+
+            try {
+                // أولوية لسياق ملف العميل عند وجود عميل نشط. القراءة محلية فقط.
+                let clientContext = null;
+                let clientResult = null;
+                if(currentActiveProfileClientId) {
+                    clientContext = await collectSanadClientContext(currentActiveProfileClientId);
+                    if(clientContext) clientResult = getSanadClientContextAnswer(text, clientContext);
+                }
+
+                if(clientResult && clientResult.confidence >= 12) {
+                    finalizeSanadChatAnswer(pendingBubble, clientResult.answer, `الإجابة من ${clientResult.source || 'ملف العميل المحلي'}`);
+                    return;
+                }
+
+                const localResult = getSanadLocalKnowledgeAnswer(text);
+
+                // فتح ملف HTML محلياً: نستخدم قاعدة المعرفة مباشرة ولا ننفذ fetch يسبب Failed to fetch.
+                if(!sanadCanUseRemoteAI()) {
+                    finalizeSanadChatAnswer(pendingBubble, localResult.answer, 'الإجابة من قاعدة المعرفة النفسية المدمجة في سَنَد');
+                    return;
+                }
+
+                // للأسئلة التي تعرفها القاعدة المحلية بثقة عالية نجيب فوراً دون انتظار الشبكة.
+                if(localResult && localResult.confidence >= 8) {
+                    finalizeSanadChatAnswer(pendingBubble, localResult.answer, 'الإجابة من قاعدة المعرفة النفسية المدمجة في سَنَد');
+                    return;
+                }
+
+                setSanadChatStatus('سَنَد يحاول استخدام خدمة الذكاء الاصطناعي المتصلة...');
+                if(pendingBubble) pendingBubble.textContent = 'جاري التفكير...';
+
+                const endpoint = getSanadAIEndpoint();
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 12000);
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    // خصوصية: لا نضيف بيانات العميل تلقائياً إلى الطلب الخارجي.
+                    body: JSON.stringify({ messages: sanadChatMessages }),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                let data = {};
+                try { data = await response.json(); } catch(e) {}
+                if(!response.ok) {
+                    const backendMessage = data && (data.error || data.message);
+                    throw new Error(backendMessage || `HTTP ${response.status}`);
+                }
+                const answer = String(data.answer || data.output_text || '').trim();
+                if(!answer) throw new Error('empty response');
+                finalizeSanadChatAnswer(pendingBubble, answer, 'الإجابة عبر خدمة الذكاء الاصطناعي المتصلة بسَنَد');
+            } catch(error) {
+                const localResult = getSanadLocalKnowledgeAnswer(text);
+                // لا نعرض Failed to fetch للمستخدم؛ نعود فوراً للقاعدة المحلية.
+                finalizeSanadChatAnswer(pendingBubble, localResult.answer, 'تعذر الاتصال بالخدمة الخارجية؛ تم استخدام قاعدة سند المحلية');
+            } finally {
+                sanadChatBusy = false;
+                if(sendBtn) sendBtn.disabled = false;
+                input.focus();
+            }
+        }
+
+        function openSanadAISettings() {
+            const current = getSanadAIEndpoint();
+            const localMode = location.protocol === 'file:';
+            openModal('إعداد اتصال سَنَد بالذكاء الاصطناعي', `
+                <div class="space-y-3 text-xs">
+                    <div class="bg-emerald-50 border border-emerald-100 text-emerald-900 p-3 rounded-xl leading-5">
+                        قاعدة المعرفة النفسية المحلية تعمل داخل سند دون أي إعداد إضافي.${localMode ? ' أنت تفتح التطبيق حالياً كملف محلي، لذلك سيستخدم سند القاعدة المحلية.' : ''}
+                    </div>
+                    <div class="bg-blue-50 border border-blue-100 text-blue-900 p-3 rounded-xl leading-5">
+                        ربط API اختياري للأسئلة الأوسع. المسار الافتراضي هو <b>/api/sanad-chat</b> عند تشغيل التطبيق على خادم يدعم هذا المسار.
+                    </div>
+                    <label class="block font-bold text-blue-900">رابط API الاختياري:</label>
+                    <input id="sanad-ai-endpoint-input" type="url" value="${escapeHtmlAttribute(current)}" placeholder="https://your-server.example/api/sanad-chat" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs" dir="ltr">
+                    <p class="text-[10px] text-slate-500">لا تضع مفتاح API داخل ملف HTML أو GitHub. المفتاح يجب أن يبقى على الخادم.</p>
+                </div>
+            `, () => {
+                const value = document.getElementById('sanad-ai-endpoint-input').value.trim();
+                if(!value || value === SANAD_AI_ENDPOINT_DEFAULT) {
+                    localStorage.removeItem('sanad_ai_endpoint');
+                } else {
+                    localStorage.setItem('sanad_ai_endpoint', value);
+                }
+                closeModal();
+                setSanadChatStatus('تم حفظ إعدادات سند. قاعدة المعرفة المحلية جاهزة دائماً.');
+                showToast('تم حفظ إعدادات دردشة سَنَد');
+            });
+            document.getElementById('modal-submit-btn').innerText = 'حفظ الإعدادات';
+        }
+
+        function escapeHtmlAttribute(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
         }
 
         function openModal(title, bodyHtml, onSubmit) {
