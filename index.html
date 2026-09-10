@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>سند - المساعد الذكي للأخصائي النفسي</title>
-    <script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=mHwydY5psufIwRucwqU-WjAEEwAP3TVWLz54jvBZAALlYiHKvslnGLidxqjKmR3hSEJd0EXvuELzCgWv_LOqimH1JMmByyZmEXRnXn8ZjQ3Z4ZN2t8tp3SsgOzZIlcIUd_x3HX6Gq5HCnOsyPfsbdRCftIwI_oGtssU6xdC9KzkeWXdynl-qlieScGLu9aObahL2AZv5x5VzKGKO7kHzv3xex5rHfA-UzEfKUVJgh-3CajekT6tMBa32petpv2zj2uQKBBWOzv9spfQk4qWQA2QoYSu0MEC16aXpQIixFsN0WKrbpU6Z2lQaXSphjsIWTMYLoWaecnvdx-SMJYqrHg" charset="UTF-8"></script><script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=iQf77uDAZ5snIXYMf161vK-ih4XVGi6dAZpAUcCqmXx5sNXXqrkBRaBuJ-ofXAhi3LvoVOXOGHizus-ghyp6ie9MnaXc2GFuJo5FyQytzt-aQjzNMFa8HisUuL7qJdu21REwxKrPCM1oD_uTSbULAS7cI2HeRsouhVwgHz7-leGeFqr0K1-fDW8fxOrp5mo6r1HYzFAm38ksiJ96Z9O_nAGqsn3Baz8rtd85Qa_Wc3wI9bk-T53kQHO47qXekPsOUIZIBQeBCC2EZttwQ3NtCzm62m00EpuvV3jWex4RaBp0UDKnoekTxoDnG-xDmKNo" charset="UTF-8"></script><script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -1472,9 +1472,9 @@
                 };
                 req.onsuccess = e => { 
                     db = e.target.result; 
+                    // Keep database opening on the critical path only.
+                    // Non-essential rendering is scheduled after the first app view is visible.
                     resolve(db); 
-                    populateInitialDataIfNeeded(); 
-                    renderInitialScreeningLists();
                 };
                 req.onupgradeneeded = e => {
                     const d = e.target.result;
@@ -1492,17 +1492,90 @@
             });
         }
 
-        window.onload = async function() {
+        // ==================== FAST STARTUP (UI/DB structure unchanged) ====================
+        const SANAD_PROFILE_BOOT_CACHE_KEY = 'sanad.profile.boot.cache.v1';
+        let sanadBootStarted = false;
+
+        function readSanadBootProfileCache() {
+            try {
+                const raw = localStorage.getItem(SANAD_PROFILE_BOOT_CACHE_KEY);
+                if(!raw) return null;
+                const p = JSON.parse(raw);
+                return p && p.name ? p : null;
+            } catch(e) {
+                return null;
+            }
+        }
+
+        function writeSanadBootProfileCache(profile) {
+            if(!profile || !profile.name) return;
+            try {
+                localStorage.setItem(SANAD_PROFILE_BOOT_CACHE_KEY, JSON.stringify({
+                    name: profile.name,
+                    specialty: profile.specialty || ''
+                }));
+            } catch(e) {}
+        }
+
+        function clearSanadBootProfileCache() {
+            try { localStorage.removeItem(SANAD_PROFILE_BOOT_CACHE_KEY); } catch(e) {}
+        }
+
+        function applySanadProfileToStartupUI(profile) {
+            if(!profile || !profile.name) return false;
+            const dashName = document.getElementById('dashboard-doc-name');
+            if(dashName) dashName.innerText = `الأخصائي النفسي ${profile.name}`;
+            const docSpan = document.getElementById('ws-preview-doc-name');
+            if(docSpan) docSpan.innerText = `الأخصائي: ${profile.name}`;
+            switchView('home');
+            initializeSanadNavigationHistory('home');
+            return true;
+        }
+
+        function scheduleSanadNonCriticalStartup() {
+            const run = () => {
+                try { populateInitialDataIfNeeded(); } catch(e) { console.warn('Deferred team init:', e); }
+                try { renderTherapeuticApproachesList(); } catch(e) { console.warn('Deferred approaches init:', e); }
+                try { renderInitialScreeningLists(); } catch(e) { console.warn('Deferred screening init:', e); }
+                try { initializeSanadNotifications(); } catch(e) { console.warn('Deferred notifications init:', e); }
+            };
+
+            // Give the browser one paint opportunity before doing non-essential startup work.
+            requestAnimationFrame(() => {
+                if('requestIdleCallback' in window) {
+                    requestIdleCallback(run, { timeout: 500 });
+                } else {
+                    setTimeout(run, 20);
+                }
+            });
+        }
+
+        async function bootSanadAppFast() {
+            if(sanadBootStarted) return;
+            sanadBootStarted = true;
+
+            // Returning users see the home screen immediately, without waiting for IndexedDB.
+            const cachedProfile = readSanadBootProfileCache();
+            if(cachedProfile) applySanadProfileToStartupUI(cachedProfile);
+
             try {
                 await initDB();
+                // Verify the cached profile against the real database in the background.
                 checkProfileStatus();
-                renderTherapeuticApproachesList();
-                renderInitialScreeningLists();
-                initializeSanadNotifications();
+                scheduleSanadNonCriticalStartup();
             } catch(err) {
                 console.error("Init failed:", err);
+                // If there was no cache and IndexedDB failed, keep the existing welcome screen usable.
+                if(!cachedProfile) switchView('welcome', { fromHistory: true });
             }
-        };
+        }
+
+        // Start as soon as the DOM is ready instead of waiting for every external resource/image.
+        if(document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootSanadAppFast, { once: true });
+        } else {
+            bootSanadAppFast();
+        }
 
         function showToast(msg, isErr=false) {
             const t = document.getElementById('toast-notification');
@@ -1596,12 +1669,10 @@
                 const profiles = e.target.result;
                 if(profiles && profiles.length > 0) {
                     const p = profiles[0];
-                    document.getElementById('dashboard-doc-name').innerText = `الأخصائي النفسي ${p.name}`;
-                    const docSpan = document.getElementById('ws-preview-doc-name');
-                    if(docSpan) docSpan.innerText = `الأخصائي: ${p.name}`;
-                    switchView('home');
-                    initializeSanadNavigationHistory('home');
+                    writeSanadBootProfileCache(p);
+                    applySanadProfileToStartupUI(p);
                 } else {
+                    clearSanadBootProfileCache();
                     switchView('welcome');
                 }
             };
@@ -1615,6 +1686,7 @@
             const tx = db.transaction(['Profile'], 'readwrite');
             tx.objectStore('Profile').add({ name, specialty });
             tx.oncomplete = () => {
+                writeSanadBootProfileCache({ name, specialty });
                 showToast('تم حفظ الملف المهني بنجاح');
                 checkProfileStatus();
             };
