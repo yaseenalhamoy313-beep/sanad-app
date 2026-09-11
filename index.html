@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>سند - المساعد الذكي للأخصائي النفسي</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=mN6wDP0DJ0OnuXoKpINzMVBoqQ9YYiWtoKFeZgk2MqZ5mj-oSPf23FNlcDTYXwe02cDlMpnSIuLtkSdl-HtwxF_dz_gC5rsXj9VlgbY_oNaiSvvHNooRjKVU9aupJ9JWlru-2kitLxdCL3jQtaA8yAq0UMn0sOUXRzy0Al0gmI92ixGGmtTDEnk6OxozJ24oEENqJp-KRPmVDabY3oEqTppW4_NRxxNN8tyjMfODMOLKv6lYAWyZ77lE5qH1zNZoMrcoemTnImyPPxxd-y0RHD3LUWgc-XNYgc1kb5zDpdLdYr1xupv-9waAd5rKxu0HCAx0d5NRy7x4TgVtlpWDuQ" charset="UTF-8"></script><script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=WVTX3peautkqTKe3kVn8WmAP3VbkbWuCR8LgfxrXKgZtPUn9P1TY5H7ogfl8r0paEEKNu_7PaSl0OllLSCCv7poVxUtt6GczTZd7SG5SL0cajvhbbrNlP64xd4Vcc4fPJPncINcwzMdiLmRKQI-qr6rZsE_uVMFz5VoEeY2sVuYsXqYtHmJ0Exq110Vtm2nfVQx_nz3sigJ1eohZa0o-wvT1Q8gQ958zPXEy-FHUHOzrGH0g58Nteqq7g3Rd1bK4L91iXtQmbh9wXk06-e-evHkFagWwuaHy0LOAwv9mW7RjwLJOI_7H1xkcIFUYZN1owOpi5pouFmPDlg1xqT-ROA" charset="UTF-8"></script><script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -1539,7 +1539,7 @@
             if(vName === 'case-formulation') loadCaseFormulationModule();
             if(vName === 'appointments') loadAppointmentsModule();
             if(vName === 'clients') {
-                document.getElementById('clients-main-container').classList.add('hidden');
+                document.getElementById('clients-main-container').classList.remove('hidden');
                 document.getElementById('client-profile-container').classList.add('hidden');
                 currentActiveProfileClientId = null;
                 loadClients();
@@ -2707,10 +2707,11 @@
             });
         }
 
-        function openCreateSharedCaseModal() { showToast('فتح إنشاء حالة مشتركة'); }
-        function openCreateTaskModal() { showToast('فتح مهمة جديدة'); }
-        function openCreateMeetingModal() { showToast('فتح اجتماع جديد'); }
-        function openCreateSupervisionModal() { showToast('فتح إشراف سريري'); }
+        // Team collaboration actions are implemented in the targeted fixes block at the end of the file.
+        function openCreateSharedCaseModal() { return sanadOpenCreateSharedCaseModal(); }
+        function openCreateTaskModal() { return sanadOpenCreateTaskModal(); }
+        function openCreateMeetingModal() { return sanadOpenCreateMeetingModal(); }
+        function openCreateSupervisionModal() { return sanadOpenCreateSupervisionModal(); }
 
         function startWizardStep1() {
             wizardData = { approach: '', ageGroup: '', problem: '', goal: '', level: '' };
@@ -2986,6 +2987,7 @@
                 tx.oncomplete = () => {
                     showToast('تمت إضافة ورقة العمل وحفظها محلياً');
                     closeModal();
+                    event.target.value = '';
                     renderMyProgramWorksheets(currentSelectedProgramId);
                 };
                 tx.onerror = () => {
@@ -3523,13 +3525,30 @@
             };
 
             const tx = db.transaction(['Clients'], 'readwrite');
-            tx.objectStore('Clients').add(clientData);
+            const addRequest = tx.objectStore('Clients').add(clientData);
+            let newClientId = null;
+            addRequest.onsuccess = e => { newClientId = e.target.result; };
             tx.oncomplete = () => {
-                showToast('تم حفظ ملف العميل بنجاح');
+                currentClientFilter = 'الكل';
+                currentClientSearchQuery = '';
+                const searchInput = document.getElementById('client-search-input');
+                if(searchInput) searchInput.value = '';
+                ['الكل', 'نشط', 'متوقف مؤقتًا', 'مكتمل', 'مؤرشف'].forEach(f => {
+                    const btn = document.getElementById('filter-btn-' + f);
+                    if(!btn) return;
+                    btn.className = f === 'الكل'
+                        ? 'px-3 py-1.5 bg-blue-900 text-white rounded-xl font-bold text-[11px] whitespace-nowrap shadow-2xs'
+                        : 'px-3 py-1.5 bg-white text-slate-600 border border-slate-200 rounded-xl font-medium text-[11px] whitespace-nowrap shadow-2xs';
+                });
+                showToast('تم حفظ ملف العميل وإدراجه ضمن العملاء');
                 closeModal();
+                document.getElementById('clients-main-container').classList.remove('hidden');
+                document.getElementById('client-profile-container').classList.add('hidden');
                 loadClients();
+                if(newClientId) setTimeout(() => openClientProfile(newClientId), 80);
             };
-            tx.onerror = () => {
+            tx.onerror = e => {
+                console.error('Client save error:', e.target && e.target.error);
                 showToast('فشل حفظ العميل في قاعدة البيانات', true);
             };
         }
@@ -4146,6 +4165,7 @@
                         interim += (interim ? ' ' : '') + text;
                     }
                 }
+                sanadLastInterimSpeechText = interim.trim();
                 renderLiveTranscript(interim);
             };
 
@@ -5836,6 +5856,564 @@
         }
 
         function closeModal() { document.getElementById('generic-modal').classList.add('hidden'); }
+
+        // =====================================================================
+        // SANAD TARGETED FUNCTIONAL FIXES — 2026-09-11
+        // Scope: live transcription + local text summary, uploaded worksheet
+        // preview, client visibility, and functional clinical team workflows.
+        // No visual redesign or unrelated module changes.
+        // =====================================================================
+
+        function sanadIdbGetAll(storeName) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const tx = db.transaction([storeName], 'readonly');
+                    const req = tx.objectStore(storeName).getAll();
+                    req.onsuccess = () => resolve(req.result || []);
+                    req.onerror = () => reject(req.error || new Error('IndexedDB read failed'));
+                } catch(err) { reject(err); }
+            });
+        }
+
+        function sanadIdbGet(storeName, id) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const tx = db.transaction([storeName], 'readonly');
+                    const req = tx.objectStore(storeName).get(id);
+                    req.onsuccess = () => resolve(req.result || null);
+                    req.onerror = () => reject(req.error || new Error('IndexedDB read failed'));
+                } catch(err) { reject(err); }
+            });
+        }
+
+        function sanadIdbAdd(storeName, value) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const tx = db.transaction([storeName], 'readwrite');
+                    const req = tx.objectStore(storeName).add(value);
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => reject(req.error || new Error('IndexedDB add failed'));
+                } catch(err) { reject(err); }
+            });
+        }
+
+        function sanadIdbPut(storeName, value) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const tx = db.transaction([storeName], 'readwrite');
+                    const req = tx.objectStore(storeName).put(value);
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => reject(req.error || new Error('IndexedDB update failed'));
+                } catch(err) { reject(err); }
+            });
+        }
+
+        function sanadIdbDelete(storeName, id) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const tx = db.transaction([storeName], 'readwrite');
+                    const req = tx.objectStore(storeName).delete(id);
+                    req.onsuccess = () => resolve(true);
+                    req.onerror = () => reject(req.error || new Error('IndexedDB delete failed'));
+                } catch(err) { reject(err); }
+            });
+        }
+
+        function sanadSafe(value) { return escapeHtmlText(String(value ?? '')); }
+
+        // ---------- Uploaded worksheet preview fix ----------
+        // Important: switchView() revokes old blob URLs. Therefore the preview view
+        // must be opened BEFORE creating the new URL, not after it.
+        function openUploadedWorksheet(id) {
+            const tx = db.transaction(['SavedWorksheets'], 'readonly');
+            tx.objectStore('SavedWorksheets').get(id).onsuccess = async e => {
+                const w = e.target.result;
+                if(!w || !w.fileBlob) {
+                    showToast('تعذر فتح الملف أو الملف غير موجود', true);
+                    return;
+                }
+
+                currentPreviewWorksheetId = id;
+                switchView('uploaded-worksheet-preview');
+                document.getElementById('preview-ws-title-header').innerText = w.title || w.originalFileName || 'ورقة عمل';
+                document.getElementById('preview-ws-meta-header').innerText = `${w.fileType ? w.fileType.toUpperCase() : 'ملف'} • ${formatFileSize(w.fileSize)}`;
+
+                cleanupWorksheetObjectUrl();
+                currentActiveObjectUrl = URL.createObjectURL(w.fileBlob);
+                const box = document.getElementById('preview-content-render-box');
+                box.innerHTML = '<div class="text-center text-slate-500 py-6">جاري تجهيز المعاينة...</div>';
+
+                const mime = String(w.mimeType || '').toLowerCase();
+                const ext = String(w.fileType || '').toLowerCase();
+                try {
+                    if(mime.includes('pdf') || ext === 'pdf') {
+                        box.innerHTML = `<object data="${currentActiveObjectUrl}" type="application/pdf" class="w-full h-full min-h-[560px] rounded-lg border-0">
+                            <iframe src="${currentActiveObjectUrl}" class="w-full h-full min-h-[560px] border-0 rounded-lg"></iframe>
+                            <div class="text-center py-8 space-y-3"><p>تعذر عرض PDF داخل هذا المتصفح.</p><button onclick="previewActionDownload()" class="px-4 py-2 bg-blue-900 text-white rounded-xl">فتح / تنزيل الملف</button></div>
+                        </object>`;
+                    } else if(mime.includes('image') || ['jpg','jpeg','png','webp','gif','bmp'].includes(ext)) {
+                        box.innerHTML = `<img src="${currentActiveObjectUrl}" alt="${sanadSafe(w.title)}" class="max-w-full max-h-[70vh] h-auto object-contain mx-auto rounded-lg shadow-sm">`;
+                    } else if(ext === 'docx' || mime.includes('wordprocessingml')) {
+                        const arrayBuffer = await w.fileBlob.arrayBuffer();
+                        if(window.mammoth && mammoth.convertToHtml) {
+                            const result = await mammoth.convertToHtml({ arrayBuffer });
+                            box.innerHTML = `<div class="p-4 text-right prose max-w-none text-xs text-slate-800 w-full">${result.value || '<p>الملف فارغ.</p>'}</div>`;
+                        } else {
+                            throw new Error('Mammoth unavailable');
+                        }
+                    } else if(ext === 'doc' || mime === 'application/msword') {
+                        box.innerHTML = `<div class="text-center py-12 space-y-3 px-4">
+                            <i class="fa-solid fa-file-word text-5xl text-blue-700"></i>
+                            <p class="font-bold text-slate-800">تم حفظ ملف DOC بنجاح وهو ظاهر ضمن أوراقك.</p>
+                            <p class="text-[10px] text-slate-500">صيغة DOC القديمة لا يقرأها المتصفح مباشرةً بشكل موثوق. يمكنك فتح الملف الحقيقي أو تنزيله من الزر أدناه.</p>
+                            <button onclick="previewActionDownload()" class="px-4 py-2.5 bg-blue-900 text-white rounded-xl font-bold shadow">فتح / تنزيل الملف</button>
+                        </div>`;
+                    } else {
+                        box.innerHTML = `<div class="text-center py-12 space-y-3 px-4">
+                            <i class="fa-solid fa-file-lines text-4xl text-blue-900"></i>
+                            <p class="font-bold text-slate-800">تم حفظ الملف بنجاح.</p>
+                            <button onclick="previewActionDownload()" class="px-4 py-2.5 bg-blue-900 text-white rounded-xl font-bold shadow">فتح / تنزيل الملف</button>
+                        </div>`;
+                    }
+                } catch(err) {
+                    console.error('Worksheet preview error:', err);
+                    box.innerHTML = `<div class="text-center py-10 space-y-3"><p class="text-rose-600 font-bold">تعذر إنشاء المعاينة داخل المتصفح، لكن الملف محفوظ فعليًا.</p><button onclick="previewActionDownload()" class="px-4 py-2 bg-blue-900 text-white rounded-xl">فتح / تنزيل الملف</button></div>`;
+                }
+            };
+        }
+
+        // ---------- Live Arabic speech-to-text robustness ----------
+        let sanadLastInterimSpeechText = '';
+
+        function getPreferredSpeechLanguage() {
+            const saved = localStorage.getItem('sanad_speech_language');
+            if(saved) return saved;
+            const browserLang = String(navigator.language || '').toLowerCase();
+            // ar-SA currently gives broader Web Speech compatibility in Chromium,
+            // while Algerian Arabic speech is still generally recognized well.
+            return browserLang.startsWith('ar') && browserLang !== 'ar-dz' ? navigator.language : 'ar-SA';
+        }
+
+        function setupAndStartSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const box = document.getElementById('live-speech-box');
+            if(!SpeechRecognition) {
+                speechRecognitionBlocked = true;
+                if(box) box.innerHTML = 'التسجيل الصوتي يعمل، لكن المتصفح لا يدعم التحويل المباشر إلى نص. افتح رابط GitHub Pages عبر <b>Google Chrome أو Microsoft Edge</b> واسمح بالميكروفون.';
+                setRecordingLiveStatus('التسجيل يعمل • التفريغ غير مدعوم في هذا المتصفح', 'info');
+                return;
+            }
+
+            speechRecognitionBlocked = false;
+            recognition = new SpeechRecognition();
+            recognition.lang = getPreferredSpeechLanguage();
+            recognition.interimResults = true;
+            recognition.continuous = true;
+            recognition.maxAlternatives = 1;
+
+            let started = false;
+            let restartTimer = null;
+            const restartRecognition = (delay = 450) => {
+                clearTimeout(restartTimer);
+                if(!speechShouldRun || !recordingIsActive || isLivePaused || speechRecognitionBlocked) return;
+                restartTimer = setTimeout(() => {
+                    if(!speechShouldRun || !recordingIsActive || isLivePaused || speechRecognitionBlocked || started) return;
+                    try { recognition.start(); } catch(err) {
+                        if(err && err.name !== 'InvalidStateError') console.warn('Speech restart failed:', err);
+                    }
+                }, delay);
+            };
+
+            recognition.onstart = () => {
+                started = true;
+                setRecordingLiveStatus('● التسجيل والتفريغ النصي يعملان الآن', 'recording');
+                if(box && !accumulatedSpeechText.trim()) box.innerText = 'التفريغ المباشر يعمل الآن... ابدأ الحديث.';
+            };
+
+            recognition.onaudiostart = () => {
+                if(box && !accumulatedSpeechText.trim()) box.innerText = 'تم التقاط صوت الميكروفون... بانتظار الكلام.';
+            };
+
+            recognition.onspeechstart = () => {
+                if(box && !accumulatedSpeechText.trim()) box.innerText = 'تم التقاط الكلام...';
+            };
+
+            recognition.onresult = event => {
+                if(isLivePaused || !recordingIsActive) return;
+                let interim = '';
+                for(let i = event.resultIndex; i < event.results.length; i++) {
+                    const result = event.results[i];
+                    const phrase = String(result[0]?.transcript || '').trim();
+                    if(!phrase) continue;
+                    if(result.isFinal) {
+                        accumulatedSpeechText += `${accumulatedSpeechText.trim() ? ' ' : ''}${phrase}`;
+                        sanadLastInterimSpeechText = '';
+                    } else {
+                        interim += `${interim ? ' ' : ''}${phrase}`;
+                    }
+                }
+                renderLiveTranscript(interim);
+            };
+
+            recognition.onnomatch = () => {
+                renderLiveTranscript('');
+            };
+
+            recognition.onerror = event => {
+                const err = event?.error || 'unknown';
+                console.warn('Speech recognition event:', err);
+                if(['not-allowed','service-not-allowed'].includes(err)) {
+                    speechRecognitionBlocked = true;
+                    speechShouldRun = false;
+                    if(box) box.innerText = 'الميكروفون يسجل الصوت، لكن إذن تحويل الكلام إلى نص مرفوض. اسمح بالميكروفون/التعرف على الكلام ثم أعد التسجيل.';
+                    setRecordingLiveStatus('التسجيل الصوتي مستمر • التفريغ النصي مرفوض', 'info');
+                } else if(err === 'language-not-supported') {
+                    try {
+                        recognition.lang = 'ar-SA';
+                        localStorage.setItem('sanad_speech_language', 'ar-SA');
+                    } catch(e) {}
+                } else if(err === 'audio-capture') {
+                    if(box) box.innerText = 'التسجيل الصوتي يعمل، لكن خدمة التفريغ لم تستطع الوصول إلى الميكروفون. أعد تحميل الصفحة واسمح للميكروفون مرة واحدة.';
+                    setRecordingLiveStatus('التسجيل يعمل • تعذر وصول التفريغ للميكروفون', 'info');
+                } else if(err === 'network') {
+                    if(box && !accumulatedSpeechText.trim()) box.innerText = 'التسجيل مستمر. خدمة التعرف على الكلام تحتاج اتصالًا بالإنترنت؛ سيحاول سَنَد إعادة تشغيلها تلقائيًا.';
+                }
+            };
+
+            recognition.onend = () => {
+                started = false;
+                restartRecognition(350);
+            };
+
+            speechShouldRun = true;
+            try {
+                recognition.start();
+            } catch(err) {
+                console.warn('Initial speech recognition start failed:', err);
+                restartRecognition(700);
+            }
+        }
+
+        function generateLocalSessionSummary(transcript) {
+            const clean = String(transcript || '').replace(/\s+/g, ' ').trim();
+            if(!clean || clean.startsWith('لم يتم إنشاء تفريغ')) {
+                return 'لا يتوفر نص كافٍ لإنشاء ملخص. راجع إعدادات التفريغ النصي ثم أعد التسجيل.';
+            }
+            const sentences = clean.split(/(?<=[.!؟?])\s+|\n+/).map(s => s.trim()).filter(s => s.length > 12);
+            const stop = new Set(['من','في','على','إلى','عن','أن','إن','كان','كانت','هو','هي','هذا','هذه','ذلك','مع','ثم','أو','و','ما','لا','لم','لن','قد','تم','أنا','انت','أنت','نحن','هم','كل','بعد','قبل','عند','لكن','لأن','كما','هناك','هنا']);
+            const words = clean.toLowerCase().replace(/[^\u0600-\u06FFa-zA-Z0-9\s]/g,' ').split(/\s+/).filter(w => w.length > 2 && !stop.has(w));
+            const freq = {};
+            words.forEach(w => freq[w] = (freq[w] || 0) + 1);
+            const scored = (sentences.length ? sentences : [clean]).map((s, i) => {
+                const sw = s.toLowerCase().replace(/[^\u0600-\u06FFa-zA-Z0-9\s]/g,' ').split(/\s+/);
+                const score = sw.reduce((a,w)=>a+(freq[w]||0),0) / Math.max(sw.length,1) + (i < 2 ? 0.6 : 0);
+                return {s, i, score};
+            });
+            const chosen = scored.sort((a,b)=>b.score-a.score).slice(0, Math.min(5, scored.length)).sort((a,b)=>a.i-b.i).map(x=>x.s);
+            const keywords = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([w])=>w);
+            return `ملخص نصي آلي للجلسة:\n${chosen.map((s,i)=>`${i+1}. ${s}`).join('\n')}\n\nالكلمات/الموضوعات الأكثر تكرارًا: ${keywords.length ? keywords.join('، ') : 'غير متاحة'}\n\nملاحظة: هذا ملخص تنظيمي آلي للنص الملتقط ولا يُعد بديلاً عن الملاحظة السريرية أو الحكم المهني.`;
+        }
+
+        // Auto-generate and persist a useful summary whenever the user opens it.
+        function viewRecordingSummary(id) {
+            const tx = db.transaction(['Recordings'], 'readonly');
+            tx.objectStore('Recordings').get(id).onsuccess = e => {
+                const r = e.target.result;
+                if(!r) return;
+                const generated = r.summary && r.summary.trim() ? r.summary : generateLocalSessionSummary(r.transcript || '');
+                if(!r.summary && generated) {
+                    r.summary = generated;
+                    try {
+                        const updateTx = db.transaction(['Recordings'], 'readwrite');
+                        updateTx.objectStore('Recordings').put(r);
+                    } catch(err) {}
+                }
+                openModal('ملخص الجلسة النصي', `
+                    <div class="space-y-3">
+                        <h4 class="font-bold text-blue-900">${sanadSafe(r.title)}</h4>
+                        <div class="bg-cyan-50/70 p-3 rounded-xl border border-cyan-100 text-blue-900 text-[11px] leading-relaxed whitespace-pre-wrap">${sanadSafe(generated)}</div>
+                    </div>
+                `, () => closeModal());
+                document.getElementById('modal-submit-btn').innerText = 'إغلاق';
+            };
+        }
+
+        // Ensure saved live recordings already contain a summary (without changing the recording UI).
+        const sanadOriginalPromptSaveRecordingModal = promptSaveRecordingModal;
+        promptSaveRecordingModal = async function() {
+            if(sanadLastInterimSpeechText && !accumulatedSpeechText.endsWith(sanadLastInterimSpeechText)) {
+                accumulatedSpeechText += `${accumulatedSpeechText.trim() ? ' ' : ''}${sanadLastInterimSpeechText}`;
+                sanadLastInterimSpeechText = '';
+            }
+            stopActiveRecordingResources(false);
+            recordedAudioBlob = await stopMediaRecorderAndGetBlob();
+            if(currentMediaStream) {
+                currentMediaStream.getTracks().forEach(track => track.stop());
+                currentMediaStream = null;
+            }
+            const finalDurationSec = activeSeconds || 1;
+            const mins = Math.floor(finalDurationSec / 60);
+            const secs = finalDurationSec % 60;
+            const durationFormatted = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            renderLiveTranscript('');
+
+            openModal('حفظ تسجيل الجلسة', `
+                <div class="space-y-3">
+                    <label class="block text-slate-700 font-bold">اسم التسجيل:</label>
+                    <input type="text" id="session-custom-title" value="${sanadSafe(currentSessionMeta.clientName)} — جلسة ${sanadSafe(currentSessionMeta.sessionType)}" class="w-full border p-2.5 rounded-xl text-xs">
+                    <div class="bg-slate-50 border rounded-xl p-2.5 text-[10px] text-slate-600 max-h-28 overflow-y-auto whitespace-pre-wrap"><b>النص الملتقط:</b><br>${sanadSafe(accumulatedSpeechText.trim() || 'لم يتم التقاط نص بعد.')}</div>
+                </div>
+            `, () => {
+                const customTitle = document.getElementById('session-custom-title').value.trim() || 'جلسة علاجية مسجلة';
+                const transcriptResult = accumulatedSpeechText.trim() || 'لم يتم إنشاء تفريغ نصي لهذا التسجيل.';
+                const newRecording = {
+                    title: customTitle,
+                    clientName: currentSessionMeta.clientName || 'عام',
+                    sessionType: currentSessionMeta.sessionType || 'فردية',
+                    date: currentSessionMeta.date || new Date().toLocaleDateString('ar-DZ', {year:'numeric', month:'long', day:'numeric'}),
+                    timestamp: Date.now(),
+                    durationSeconds: finalDurationSec,
+                    durationFormatted: `${durationFormatted} دقيقة`,
+                    audioBlob: recordedAudioBlob,
+                    mimeType: recordedAudioBlob?.type || 'audio/webm',
+                    transcript: transcriptResult,
+                    summary: generateLocalSessionSummary(transcriptResult),
+                    createdAt: new Date().toLocaleDateString('ar-SA')
+                };
+                const tx = db.transaction(['Recordings'], 'readwrite');
+                tx.objectStore('Recordings').add(newRecording);
+                tx.oncomplete = () => {
+                    showToast('تم حفظ التسجيل مع التفريغ والملخص النصي');
+                    closeModal();
+                    mediaRecorder = null;
+                    audioChunks = [];
+                    switchView('recordings-library');
+                    loadRecordingsLibrary();
+                };
+                tx.onerror = () => {
+                    showToast('فشل حفظ التسجيل في قاعدة البيانات', true);
+                    closeModal();
+                };
+            });
+        };
+
+        // ---------- Clinical team: real local create/save/render workflows ----------
+        function sanadSelectOptions(items, valueKey='id', labelFn=(x)=>x.name) {
+            return items.map(item => `<option value="${item[valueKey]}">${sanadSafe(labelFn(item))}</option>`).join('');
+        }
+
+        async function loadTeamData() {
+            if(!db) return;
+            try {
+                const [members, cases, tasks, meetings, supervisions] = await Promise.all([
+                    sanadIdbGetAll('TeamMembers'), sanadIdbGetAll('SharedCases'), sanadIdbGetAll('TeamTasks'), sanadIdbGetAll('TeamMeetings'), sanadIdbGetAll('ClinicalSupervision')
+                ]);
+                document.getElementById('stat-team-count').innerText = members.length;
+                document.getElementById('stat-cases-count').innerText = cases.filter(c => c.status !== 'مغلق').length;
+                document.getElementById('stat-tasks-count').innerText = tasks.filter(t => t.status !== 'مكتملة').length;
+                document.getElementById('stat-meetings-count').innerText = meetings.filter(m => m.status !== 'ملغي').length;
+                sanadRenderTeamMembers(members);
+                sanadRenderSharedCases(cases);
+                sanadRenderTeamTasks(tasks);
+                sanadRenderTeamMeetings(meetings);
+                sanadRenderClinicalSupervisions(supervisions);
+            } catch(err) {
+                console.error('Team load error:', err);
+                showToast('تعذر تحميل بيانات فريق العلاج', true);
+            }
+        }
+
+        function sanadRenderTeamMembers(members) {
+            const container = document.getElementById('team-members-list');
+            if(!container) return;
+            if(!members.length) {
+                container.innerHTML = '<div class="text-center py-6 text-slate-400 bg-white p-4 rounded-xl border">لا يوجد أعضاء في فريق العلاج حالياً.</div>';
+                return;
+            }
+            container.innerHTML = members.map(m => `
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs flex justify-between items-center">
+                    <div><h4 class="font-bold text-blue-900 text-xs">${sanadSafe(m.name)}</h4><p class="text-[10px] text-cyan-600 mt-0.5">${sanadSafe(m.specialty || '')}${m.role ? ' • '+sanadSafe(m.role) : ''}</p></div>
+                    <button onclick="deleteTeamMember(${m.id})" class="px-2.5 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-[10px] font-bold"><i class="fa-solid fa-trash"></i></button>
+                </div>`).join('');
+        }
+
+        function sanadRenderSharedCases(cases) {
+            const box = document.getElementById('shared-cases-list');
+            if(!box) return;
+            if(!cases.length) { box.innerHTML = '<div class="text-center py-6 text-slate-400 bg-white p-4 rounded-xl border">لا توجد حالات مشتركة بعد.</div>'; return; }
+            cases.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+            box.innerHTML = cases.map(c => `
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
+                    <div class="flex justify-between gap-2 items-start">
+                        <div><h4 class="font-bold text-blue-900 text-xs">${sanadSafe(c.title || c.clientName || 'حالة مشتركة')}</h4><p class="text-[10px] text-slate-500">${sanadSafe(c.clientName || '')} • ${sanadSafe(c.status || 'نشطة')}</p></div>
+                        <span class="px-2 py-1 bg-cyan-50 text-cyan-700 rounded-full text-[9px] font-bold">${(c.memberIds||[]).length} أعضاء</span>
+                    </div>
+                    <p class="text-[10px] text-slate-600 line-clamp-2">${sanadSafe(c.summary || 'لا يوجد ملخص بعد')}</p>
+                    <div class="flex gap-1.5 pt-1 border-t">
+                        <button onclick="openSharedCaseDetail(${c.id})" class="flex-1 py-1.5 bg-blue-900 text-white rounded-lg text-[10px] font-bold">فتح الحالة</button>
+                        <button onclick="sanadDeleteTeamItem('SharedCases', ${c.id}, 'الحالة المشتركة')" class="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-[10px] font-bold"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>`).join('');
+        }
+
+        function sanadRenderTeamTasks(tasks) {
+            const box = document.getElementById('team-tasks-list');
+            if(!box) return;
+            if(!tasks.length) { box.innerHTML = '<div class="text-center py-6 text-slate-400 bg-white p-4 rounded-xl border">لا توجد مهام سريرية بعد.</div>'; return; }
+            tasks.sort((a,b)=>(a.status==='مكتملة')-(b.status==='مكتملة') || String(a.dueDate||'').localeCompare(String(b.dueDate||'')));
+            box.innerHTML = tasks.map(t => `
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs space-y-2 ${t.status==='مكتملة'?'opacity-70':''}">
+                    <div class="flex justify-between items-start gap-2"><div><h4 class="font-bold text-blue-900 text-xs">${sanadSafe(t.title)}</h4><p class="text-[10px] text-slate-500">المسؤول: ${sanadSafe(t.assigneeName || 'غير محدد')} • الاستحقاق: ${sanadSafe(t.dueDate || 'غير محدد')}</p></div><span class="text-[9px] font-bold px-2 py-1 rounded-full ${t.priority==='عالية'?'bg-rose-50 text-rose-700':'bg-slate-100 text-slate-600'}">${sanadSafe(t.priority||'متوسطة')}</span></div>
+                    <p class="text-[10px] text-slate-600">${sanadSafe(t.notes || '')}</p>
+                    <div class="flex gap-1.5 pt-1 border-t"><button onclick="sanadToggleTaskStatus(${t.id})" class="flex-1 py-1.5 ${t.status==='مكتملة'?'bg-amber-50 text-amber-700':'bg-emerald-50 text-emerald-700'} rounded-lg text-[10px] font-bold">${t.status==='مكتملة'?'إعادة فتح':'تعليم كمكتملة'}</button><button onclick="sanadDeleteTeamItem('TeamTasks', ${t.id}, 'المهمة')" class="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-[10px] font-bold"><i class="fa-solid fa-trash"></i></button></div>
+                </div>`).join('');
+        }
+
+        function sanadRenderTeamMeetings(meetings) {
+            const box = document.getElementById('team-meetings-list');
+            if(!box) return;
+            if(!meetings.length) { box.innerHTML = '<div class="text-center py-6 text-slate-400 bg-white p-4 rounded-xl border">لا توجد اجتماعات حالات مجدولة.</div>'; return; }
+            meetings.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) || String(a.time||'').localeCompare(String(b.time||'')));
+            box.innerHTML = meetings.map(m => `
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
+                    <div class="flex justify-between items-start"><div><h4 class="font-bold text-blue-900 text-xs">${sanadSafe(m.title || 'اجتماع حالة')}</h4><p class="text-[10px] text-slate-500">${sanadSafe(m.date||'')} • ${sanadSafe(m.time||'')} • ${sanadSafe(m.caseTitle||'عام')}</p></div><span class="text-[9px] px-2 py-1 bg-blue-50 text-blue-700 rounded-full font-bold">${sanadSafe(m.status||'مجدول')}</span></div>
+                    <p class="text-[10px] text-slate-600">${sanadSafe(m.agenda || '')}</p>
+                    <div class="flex gap-1.5 pt-1 border-t"><button onclick="sanadMarkMeetingHeld(${m.id})" class="flex-1 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-[10px] font-bold">تم الاجتماع</button><button onclick="sanadDeleteTeamItem('TeamMeetings', ${m.id}, 'الاجتماع')" class="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-[10px] font-bold"><i class="fa-solid fa-trash"></i></button></div>
+                </div>`).join('');
+        }
+
+        function sanadRenderClinicalSupervisions(items) {
+            const box = document.getElementById('clinical-supervision-list');
+            if(!box) return;
+            if(!items.length) { box.innerHTML = '<div class="text-center py-6 text-slate-400 bg-white p-4 rounded-xl border">لا توجد حالات إشراف سريري بعد.</div>'; return; }
+            items.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+            box.innerHTML = items.map(s => `
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
+                    <div><h4 class="font-bold text-blue-900 text-xs">${sanadSafe(s.clientName || s.title || 'حالة للإشراف')}</h4><p class="text-[10px] text-slate-500">المعروض بواسطة: ${sanadSafe(s.superviseeName||'غير محدد')} • ${sanadSafe(s.date||'')}</p></div>
+                    <p class="text-[10px] text-slate-600"><strong>سؤال الإشراف:</strong> ${sanadSafe(s.question||'')}</p>
+                    <div class="flex gap-1.5 pt-1 border-t"><button onclick="sanadToggleSupervision(${s.id})" class="flex-1 py-1.5 bg-purple-50 text-purple-700 rounded-lg text-[10px] font-bold">${s.status==='مغلق'?'إعادة فتح':'إغلاق الإشراف'}</button><button onclick="sanadDeleteTeamItem('ClinicalSupervision', ${s.id}, 'الإشراف')" class="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-[10px] font-bold"><i class="fa-solid fa-trash"></i></button></div>
+                </div>`).join('');
+        }
+
+        async function sanadOpenCreateSharedCaseModal() {
+            const [clients, members] = await Promise.all([sanadIdbGetAll('Clients'), sanadIdbGetAll('TeamMembers')]);
+            if(!clients.length) { showToast('أضف عميلاً أولاً قبل إنشاء حالة مشتركة', true); return; }
+            const memberChecks = members.length ? members.map(m => `<label class="flex items-center gap-2 bg-slate-50 border rounded-lg p-2"><input type="checkbox" class="sanad-case-member" value="${m.id}"><span>${sanadSafe(m.name)} — ${sanadSafe(m.specialty||'')}</span></label>`).join('') : '<p class="text-amber-700 bg-amber-50 p-2 rounded-lg">لا يوجد أعضاء بعد؛ يمكنك إنشاء الحالة ثم إضافة أعضاء للفريق.</p>';
+            openModal('إنشاء حالة مشتركة', `
+                <div class="space-y-3">
+                    <div><label class="block font-bold text-blue-900 mb-1">العميل *</label><select id="shared-case-client" class="w-full border p-2.5 rounded-xl text-xs">${sanadSelectOptions(clients,'id',c=>`${c.name} • ${c.fileNumber||''}`)}</select></div>
+                    <div><label class="block font-bold text-blue-900 mb-1">عنوان الحالة</label><input id="shared-case-title" class="w-full border p-2.5 rounded-xl text-xs" placeholder="مثال: خطة علاج مشتركة"></div>
+                    <div><label class="block font-bold text-blue-900 mb-1">ملخص سريري</label><textarea id="shared-case-summary" rows="3" class="w-full border p-2.5 rounded-xl text-xs"></textarea></div>
+                    <div><label class="block font-bold text-blue-900 mb-1">خطة الرعاية المشتركة</label><textarea id="shared-case-plan" rows="3" class="w-full border p-2.5 rounded-xl text-xs"></textarea></div>
+                    <div><label class="block font-bold text-blue-900 mb-1">المختصون المشاركون</label><div class="space-y-1.5 max-h-36 overflow-y-auto">${memberChecks}</div></div>
+                </div>
+            `, async () => {
+                const sel = document.getElementById('shared-case-client');
+                const clientId = Number(sel.value);
+                const client = clients.find(c => c.id === clientId);
+                const memberIds = [...document.querySelectorAll('.sanad-case-member:checked')].map(x=>Number(x.value));
+                const now = Date.now();
+                await sanadIdbAdd('SharedCases', {
+                    clientId, clientName: client?.name || '',
+                    title: document.getElementById('shared-case-title').value.trim() || `حالة مشتركة — ${client?.name || ''}`,
+                    summary: document.getElementById('shared-case-summary').value.trim(),
+                    carePlan: document.getElementById('shared-case-plan').value.trim(),
+                    memberIds, status:'نشطة', notes:[], createdAt:now, updatedAt:now
+                });
+                closeModal(); showToast('تم إنشاء الحالة المشتركة وحفظها'); loadTeamData();
+            });
+            document.getElementById('modal-submit-btn').innerText = 'إنشاء الحالة';
+        }
+
+        async function sanadOpenCreateTaskModal() {
+            const [members, cases] = await Promise.all([sanadIdbGetAll('TeamMembers'), sanadIdbGetAll('SharedCases')]);
+            const memberOpts = '<option value="">غير محدد</option>'+sanadSelectOptions(members,'id',m=>`${m.name} — ${m.specialty||''}`);
+            const caseOpts = '<option value="">بدون ربط بحالة</option>'+sanadSelectOptions(cases,'id',c=>c.title||c.clientName||'حالة');
+            openModal('مهمة سريرية جديدة', `
+                <div class="space-y-3"><input id="team-task-title" class="w-full border p-2.5 rounded-xl text-xs" placeholder="عنوان المهمة *"><select id="team-task-case" class="w-full border p-2.5 rounded-xl text-xs">${caseOpts}</select><select id="team-task-assignee" class="w-full border p-2.5 rounded-xl text-xs">${memberOpts}</select><div class="grid grid-cols-2 gap-2"><input id="team-task-due" type="date" class="w-full border p-2.5 rounded-xl text-xs"><select id="team-task-priority" class="w-full border p-2.5 rounded-xl text-xs"><option>متوسطة</option><option>عالية</option><option>منخفضة</option></select></div><textarea id="team-task-notes" rows="3" class="w-full border p-2.5 rounded-xl text-xs" placeholder="تفاصيل المهمة"></textarea></div>
+            `, async () => {
+                const title = document.getElementById('team-task-title').value.trim(); if(!title){showToast('أدخل عنوان المهمة',true);return;}
+                const memberId = Number(document.getElementById('team-task-assignee').value)||null;
+                const member = members.find(m=>m.id===memberId);
+                const caseId = Number(document.getElementById('team-task-case').value)||null;
+                const linkedCase = cases.find(c=>c.id===caseId);
+                await sanadIdbAdd('TeamTasks',{title, caseId, caseTitle:linkedCase?.title||'', assigneeId:memberId, assigneeName:member?.name||'', dueDate:document.getElementById('team-task-due').value, priority:document.getElementById('team-task-priority').value, notes:document.getElementById('team-task-notes').value.trim(), status:'مفتوحة', createdAt:Date.now(), updatedAt:Date.now()});
+                closeModal(); showToast('تم إنشاء المهمة وحفظها'); loadTeamData();
+            });
+            document.getElementById('modal-submit-btn').innerText='حفظ المهمة';
+        }
+
+        async function sanadOpenCreateMeetingModal() {
+            const [members, cases] = await Promise.all([sanadIdbGetAll('TeamMembers'), sanadIdbGetAll('SharedCases')]);
+            const today = new Date().toISOString().split('T')[0];
+            const caseOpts = '<option value="">اجتماع عام</option>'+sanadSelectOptions(cases,'id',c=>c.title||c.clientName||'حالة');
+            const memberChecks = members.map(m=>`<label class="flex items-center gap-2 bg-slate-50 border rounded-lg p-2"><input type="checkbox" class="sanad-meeting-member" value="${m.id}"><span>${sanadSafe(m.name)}</span></label>`).join('') || '<p class="text-slate-400">لا يوجد أعضاء بعد.</p>';
+            openModal('اجتماع حالة جديد', `
+                <div class="space-y-3"><input id="team-meeting-title" class="w-full border p-2.5 rounded-xl text-xs" placeholder="عنوان الاجتماع"><select id="team-meeting-case" class="w-full border p-2.5 rounded-xl text-xs">${caseOpts}</select><div class="grid grid-cols-2 gap-2"><input id="team-meeting-date" type="date" value="${today}" class="w-full border p-2.5 rounded-xl text-xs"><input id="team-meeting-time" type="time" class="w-full border p-2.5 rounded-xl text-xs"></div><textarea id="team-meeting-agenda" rows="3" class="w-full border p-2.5 rounded-xl text-xs" placeholder="محاور الاجتماع"></textarea><div><label class="block font-bold text-blue-900 mb-1">الحضور</label><div class="space-y-1.5 max-h-28 overflow-y-auto">${memberChecks}</div></div></div>
+            `, async () => {
+                const caseId=Number(document.getElementById('team-meeting-case').value)||null; const linked=cases.find(c=>c.id===caseId); const participantIds=[...document.querySelectorAll('.sanad-meeting-member:checked')].map(x=>Number(x.value));
+                await sanadIdbAdd('TeamMeetings',{title:document.getElementById('team-meeting-title').value.trim()||'اجتماع حالة',caseId,caseTitle:linked?.title||'',date:document.getElementById('team-meeting-date').value,time:document.getElementById('team-meeting-time').value,agenda:document.getElementById('team-meeting-agenda').value.trim(),participantIds,status:'مجدول',createdAt:Date.now(),updatedAt:Date.now()});
+                closeModal(); showToast('تم جدولة الاجتماع وحفظه'); loadTeamData();
+            });
+            document.getElementById('modal-submit-btn').innerText='حفظ الاجتماع';
+        }
+
+        async function sanadOpenCreateSupervisionModal() {
+            const [clients, members] = await Promise.all([sanadIdbGetAll('Clients'), sanadIdbGetAll('TeamMembers')]);
+            if(!clients.length){showToast('أضف عميلاً أولاً قبل إنشاء حالة للإشراف',true);return;}
+            const memberOpts='<option value="">الأخصائي الحالي</option>'+sanadSelectOptions(members,'id',m=>`${m.name} — ${m.specialty||''}`);
+            openModal('إضافة حالة للإشراف السريري', `
+                <div class="space-y-3"><select id="supervision-client" class="w-full border p-2.5 rounded-xl text-xs">${sanadSelectOptions(clients,'id',c=>`${c.name} • ${c.fileNumber||''}`)}</select><select id="supervision-member" class="w-full border p-2.5 rounded-xl text-xs">${memberOpts}</select><input id="supervision-date" type="date" value="${new Date().toISOString().split('T')[0]}" class="w-full border p-2.5 rounded-xl text-xs"><textarea id="supervision-question" rows="3" class="w-full border p-2.5 rounded-xl text-xs" placeholder="السؤال أو المأزق السريري *"></textarea><textarea id="supervision-notes" rows="3" class="w-full border p-2.5 rounded-xl text-xs" placeholder="ملاحظات/أهداف الإشراف"></textarea></div>
+            `, async () => {
+                const question=document.getElementById('supervision-question').value.trim(); if(!question){showToast('أدخل سؤال الإشراف السريري',true);return;}
+                const clientId=Number(document.getElementById('supervision-client').value); const client=clients.find(c=>c.id===clientId); const memberId=Number(document.getElementById('supervision-member').value)||null; const member=members.find(m=>m.id===memberId);
+                await sanadIdbAdd('ClinicalSupervision',{clientId,clientName:client?.name||'',superviseeId:memberId,superviseeName:member?.name||'الأخصائي الحالي',date:document.getElementById('supervision-date').value,question,notes:document.getElementById('supervision-notes').value.trim(),status:'مفتوح',createdAt:Date.now(),updatedAt:Date.now()});
+                closeModal(); showToast('تم حفظ حالة الإشراف السريري'); loadTeamData();
+            });
+            document.getElementById('modal-submit-btn').innerText='حفظ الإشراف';
+        }
+
+        async function sanadToggleTaskStatus(id) {
+            const item=await sanadIdbGet('TeamTasks',id); if(!item)return; item.status=item.status==='مكتملة'?'مفتوحة':'مكتملة'; item.updatedAt=Date.now(); await sanadIdbPut('TeamTasks',item); showToast('تم تحديث حالة المهمة'); loadTeamData();
+        }
+        async function sanadMarkMeetingHeld(id) {
+            const item=await sanadIdbGet('TeamMeetings',id); if(!item)return; item.status='تم'; item.updatedAt=Date.now(); await sanadIdbPut('TeamMeetings',item); showToast('تم تسجيل انعقاد الاجتماع'); loadTeamData();
+        }
+        async function sanadToggleSupervision(id) {
+            const item=await sanadIdbGet('ClinicalSupervision',id); if(!item)return; item.status=item.status==='مغلق'?'مفتوح':'مغلق'; item.updatedAt=Date.now(); await sanadIdbPut('ClinicalSupervision',item); showToast('تم تحديث حالة الإشراف'); loadTeamData();
+        }
+        function sanadDeleteTeamItem(storeName,id,label) {
+            openModal(`حذف ${label}؟`,`<p class="text-xs text-slate-700">هل تريد حذف ${label} نهائيًا من هذا الجهاز؟</p>`,async()=>{await sanadIdbDelete(storeName,id);closeModal();showToast(`تم حذف ${label}`);loadTeamData();});
+            document.getElementById('modal-submit-btn').innerText='حذف';
+        }
+
+        async function openSharedCaseDetail(id) {
+            activeSharedCaseId=id; const c=await sanadIdbGet('SharedCases',id); if(!c){showToast('الحالة غير موجودة',true);return;}
+            document.getElementById('detail-case-title').innerText=c.title||c.clientName||'ملف الحالة المشتركة';
+            document.getElementById('detail-case-subtitle').innerText=`${c.clientName||''} • ${c.status||'نشطة'}`;
+            switchView('shared-case-detail'); switchCaseDetailTab('summary');
+        }
+
+        async function switchCaseDetailTab(tabName) {
+            ['summary','notes','ai','permissions'].forEach(n=>{const b=document.getElementById('c-tab-'+n);if(b)b.className='py-2.5 px-3 font-medium text-slate-500 whitespace-nowrap';});
+            const active=document.getElementById('c-tab-'+tabName); if(active)active.className='py-2.5 px-3 font-bold text-blue-900 border-b-2 border-blue-900 whitespace-nowrap';
+            const c=await sanadIdbGet('SharedCases',activeSharedCaseId); if(!c)return; const area=document.getElementById('case-detail-content-area');
+            if(tabName==='summary') {
+                area.innerHTML=`<div class="bg-white p-4 rounded-2xl border space-y-3"><div><span class="font-bold text-blue-900">الملخص السريري</span><p class="mt-1 text-slate-700 whitespace-pre-wrap">${sanadSafe(c.summary||'لا يوجد ملخص بعد')}</p></div><div><span class="font-bold text-blue-900">خطة الرعاية المشتركة</span><p class="mt-1 text-slate-700 whitespace-pre-wrap">${sanadSafe(c.carePlan||'لا توجد خطة بعد')}</p></div></div>`;
+            } else if(tabName==='notes') {
+                const notes=(c.notes||[]); area.innerHTML=`<div class="bg-white p-4 rounded-2xl border space-y-3"><textarea id="shared-case-new-note" rows="3" class="w-full border p-2.5 rounded-xl text-xs" placeholder="أضف ملاحظة للفريق..."></textarea><button onclick="sanadAddSharedCaseNote()" class="w-full py-2.5 bg-blue-900 text-white rounded-xl font-bold">إضافة الملاحظة</button></div><div class="space-y-2">${notes.length?notes.slice().reverse().map(n=>`<div class="bg-white p-3 rounded-xl border"><p class="text-slate-700 whitespace-pre-wrap">${sanadSafe(n.text)}</p><span class="text-[9px] text-slate-400">${sanadSafe(n.date)}</span></div>`).join(''):'<div class="text-center py-6 text-slate-400">لا توجد ملاحظات بعد.</div>'}</div>`;
+            } else if(tabName==='ai') {
+                area.innerHTML='<div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl text-blue-900 leading-6">يمكنك استخدام دردشة سَنَد من الشريط السفلي لتحليل المعلومات بعد إزالة أي بيانات تعريفية حساسة عن العميل. لا يتم إرسال ملف الحالة تلقائيًا لأي خدمة خارجية.</div>';
+            } else {
+                const members=await sanadIdbGetAll('TeamMembers'); const names=members.filter(m=>(c.memberIds||[]).includes(m.id)).map(m=>m.name);
+                area.innerHTML=`<div class="bg-white p-4 rounded-2xl border space-y-2"><span class="font-bold text-blue-900">المختصون المشاركون</span><p>${sanadSafe(names.join('، ')||'لم يتم تعيين أعضاء')}</p><p class="text-[10px] text-slate-500">البيانات محفوظة محليًا على هذا المتصفح/الجهاز. المزامنة بين أجهزة متعددة تحتاج خادمًا وقاعدة بيانات وصلاحيات مستخدمين.</p></div>`;
+            }
+        }
+
+        async function sanadAddSharedCaseNote() {
+            const text=document.getElementById('shared-case-new-note')?.value.trim(); if(!text){showToast('اكتب الملاحظة أولاً',true);return;} const c=await sanadIdbGet('SharedCases',activeSharedCaseId); if(!c)return; c.notes=c.notes||[]; c.notes.push({text,date:new Date().toLocaleString('ar-DZ'),createdAt:Date.now()}); c.updatedAt=Date.now(); await sanadIdbPut('SharedCases',c); showToast('تمت إضافة ملاحظة الفريق'); switchCaseDetailTab('notes');
+        }
+
     </script>
 </body>
 </html>
